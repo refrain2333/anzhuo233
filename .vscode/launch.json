@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "学生信息管理系统",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "llm_integration.main",
+            "args": ["--dev"],
+            "justMyCode": true
+        }
+    ]
+} 
