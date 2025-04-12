@@ -2,117 +2,234 @@
 
 {% block title %}首页 - 智慧校园学习助手系统{% endblock %}
 
-{% block content %}
-<section class="welcome">
-    <h2>欢迎使用智慧校园学习助手系统</h2>
-    <p>本系统主要用于后端API测试，前端页面仅作为API功能验证使用。</p>
-</section>
-
-<section class="api-list">
-    <h3>可用API端点</h3>
-    <div class="api-card">
-        <h4>用户认证</h4>
-        <ul>
-            <li><code>/api/v1/auth/login</code> - 用户登录</li>
-            <li><code>/api/v1/auth/register</code> - 用户注册</li>
-            <li><code>/api/v1/auth/logout</code> - 用户登出</li>
-        </ul>
-    </div>
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+        color: white;
+        padding: 3rem 0;
+        text-align: center;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
     
-    <div class="api-card">
-        <h4>用户管理</h4>
-        <ul>
-            <li><code>/api/v1/user/profile</code> - 用户资料</li>
-            <li><code>/api/v1/user/update</code> - 更新资料</li>
-        </ul>
-    </div>
+    .hero-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: white;
+    }
     
-    <div class="api-card">
-        <h4>学习模块</h4>
-        <ul>
-            <li><code>/api/v1/learning/courses</code> - 课程列表</li>
-            <li><code>/api/v1/learning/resources</code> - 学习资源</li>
-        </ul>
-    </div>
-</section>
-
-<section class="api-test">
-    <h3>API测试面板</h3>
-    <div class="test-container">
-        <div class="form-group">
-            <label for="api-endpoint">API端点</label>
-            <input type="text" id="api-endpoint" placeholder="例如: /api/v1/auth/login">
-        </div>
-        <div class="form-group">
-            <label for="api-method">请求方法</label>
-            <select id="api-method">
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="DELETE">DELETE</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="api-data">请求数据 (JSON)</label>
-            <textarea id="api-data" rows="5" placeholder='{"username": "test", "password": "password"}'></textarea>
-        </div>
-        <button id="send-request" class="btn">发送请求</button>
-        <div class="response-container">
-            <h4>响应结果</h4>
-            <pre id="api-response">请先发送请求...</pre>
-        </div>
-    </div>
-</section>
+    .hero-section p {
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 1.5rem auto;
+    }
+    
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #3f51b5;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #2c3e50;
+    }
+    
+    .feature-card p {
+        color: #7f8c8d;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background-color: #3f51b5;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background-color: #303f9f;
+    }
+    
+    .btn-secondary {
+        background-color: #f5f5f5;
+        color: #333;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e0e0e0;
+    }
+    
+    .info-section {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-section h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .info-item {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .info-item h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+        color: #3f51b5;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section h2 {
+            font-size: 2rem;
+        }
+        
+        .hero-section p {
+            font-size: 1rem;
+        }
+        
+        .feature-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sendBtn = document.getElementById('send-request');
-        const endpointInput = document.getElementById('api-endpoint');
-        const methodSelect = document.getElementById('api-method');
-        const dataTextarea = document.getElementById('api-data');
-        const responseArea = document.getElementById('api-response');
+{% block content %}
+<!-- 欢迎区域 -->
+<section class="hero-section">
+    <h2>欢迎使用智慧校园学习助手系统</h2>
+    <p>基于智能分析的学习辅助平台，为学生提供个性化学习计划与资源推荐</p>
+    <div class="btn-group">
+        <a href="{{ url_for('login') }}" class="btn-primary">立即登录</a>
+        <a href="{{ url_for('register') }}" class="btn-secondary">注册账号</a>
+    </div>
+</section>
+
+<!-- 主要功能区域 -->
+<section>
+    <div class="feature-cards">
+        <div class="feature-card">
+            <div class="feature-icon">👨‍🎓</div>
+            <h3>学生空间</h3>
+            <p>个性化学习计划、资源推荐与学习进度跟踪，助力高效学习</p>
+            <div class="btn-group">
+                <a href="{{ url_for('login') }}" class="btn-primary">立即进入</a>
+            </div>
+        </div>
         
-        sendBtn.addEventListener('click', async function() {
-            const endpoint = endpointInput.value.trim();
-            const method = methodSelect.value;
-            let data = null;
-            
-            try {
-                data = dataTextarea.value ? JSON.parse(dataTextarea.value) : null;
-            } catch (e) {
-                responseArea.textContent = '请求数据JSON格式错误: ' + e.message;
-                return;
-            }
-            
-            if (!endpoint) {
-                responseArea.textContent = '请输入API端点!';
-                return;
-            }
-            
-            responseArea.textContent = '请求中...';
-            
-            try {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                };
-                
-                if (data && (method === 'POST' || method === 'PUT')) {
-                    options.body = JSON.stringify(data);
-                }
-                
-                const response = await fetch(endpoint, options);
-                const result = await response.json();
-                
-                responseArea.textContent = JSON.stringify(result, null, 2);
-            } catch (error) {
-                responseArea.textContent = '请求错误: ' + error.message;
-            }
-        });
-    });
-</script>
+        <div class="feature-card">
+            <div class="feature-icon">👨‍💼</div>
+            <h3>管理平台</h3>
+            <p>课程管理、学生数据分析与学习资源维护，教务管理一体化平台</p>
+            <div class="btn-group">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn-primary">管理入口</a>
+            </div>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>数据中心</h3>
+            <p>学习行为分析、知识图谱与推荐系统，基于数据驱动的智能决策</p>
+            <div class="btn-group">
+                <a href="#" class="btn-primary">查看数据</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 系统信息区域 -->
+<section class="info-section">
+    <h2>系统特色</h2>
+    <div class="info-grid">
+        <div class="info-item">
+            <h3>个性化学习</h3>
+            <p>基于学生学习行为与偏好，智能生成定制化学习计划与资源推荐</p>
+        </div>
+        
+        <div class="info-item">
+            <h3>智能分析</h3>
+            <p>通过数据分析与机器学习技术，挖掘学习规律，预测学习效果</p>
+        </div>
+        
+        <div class="info-item">
+            <h3>协作学习</h3>
+            <p>支持小组协作与讨论，促进学生之间的知识分享与互助学习</p>
+        </div>
+        
+        <div class="info-item">
+            <h3>全面评测</h3>
+            <p>提供多维度评测与反馈，帮助学生及时调整学习策略</p>
+        </div>
+    </div>
+</section>
+
+<!-- API信息区域 -->
+<section>
+    <h2>系统状态</h2>
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3>API状态</h3>
+            <p>所有服务运行正常</p>
+            <div class="card-actions">
+                <a href="{{ url_for('health') }}" class="btn">检查状态</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3>API文档</h3>
+            <p>查看完整API文档与使用说明</p>
+            <div class="card-actions">
+                <a href="{{ url_for('api_docs') }}" class="btn">查看文档</a>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %} 
