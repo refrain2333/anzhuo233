@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}API文档 - 智慧校园学习助手系统{% endblock %}
+
+{% block content %}
+<section class="api-docs-header">
+    <h2>API文档</h2>
+    <p>以下是智慧校园学习助手系统提供的API接口文档，方便开发者进行调用和集成。</p>
+</section>
+
+<section class="api-endpoints">
+    <h3>认证相关接口</h3>
+    
+    <div class="api-doc-item">
+        <h4>用户登录</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/auth/login</code></p>
+            <p><strong>请求方法:</strong> <code>POST</code></p>
+            <p><strong>请求参数:</strong></p>
+            <pre>
+{
+    "username": "用户名",
+    "password": "密码"
+}
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "message": "登录成功",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "user": {
+            "id": 1,
+            "username": "用户名",
+            "email": "邮箱地址"
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+    
+    <div class="api-doc-item">
+        <h4>用户注册</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/auth/register</code></p>
+            <p><strong>请求方法:</strong> <code>POST</code></p>
+            <p><strong>请求参数:</strong></p>
+            <pre>
+{
+    "username": "用户名",
+    "password": "密码",
+    "email": "邮箱地址"
+}
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "message": "注册成功",
+    "data": {
+        "user_id": 1
+    }
+}
+            </pre>
+        </div>
+    </div>
+</section>
+
+<section class="api-endpoints">
+    <h3>用户相关接口</h3>
+    
+    <div class="api-doc-item">
+        <h4>获取用户信息</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/user/profile</code></p>
+            <p><strong>请求方法:</strong> <code>GET</code></p>
+            <p><strong>请求头:</strong></p>
+            <pre>
+Authorization: Bearer {token}
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "username": "用户名",
+        "email": "邮箱地址",
+        "role": "用户角色",
+        "created_at": "2023-01-01T00:00:00Z"
+    }
+}
+            </pre>
+        </div>
+    </div>
+    
+    <div class="api-doc-item">
+        <h4>更新用户信息</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/user/update</code></p>
+            <p><strong>请求方法:</strong> <code>PUT</code></p>
+            <p><strong>请求头:</strong></p>
+            <pre>
+Authorization: Bearer {token}
+            </pre>
+            <p><strong>请求参数:</strong></p>
+            <pre>
+{
+    "email": "新邮箱地址",
+    "password": "新密码(可选)"
+}
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "message": "更新成功"
+}
+            </pre>
+        </div>
+    </div>
+</section>
+
+<section class="api-endpoints">
+    <h3>学习模块接口</h3>
+    
+    <div class="api-doc-item">
+        <h4>获取课程列表</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/learning/courses</code></p>
+            <p><strong>请求方法:</strong> <code>GET</code></p>
+            <p><strong>请求头:</strong></p>
+            <pre>
+Authorization: Bearer {token}
+            </pre>
+            <p><strong>请求参数:</strong></p>
+            <pre>
+?page=1&per_page=10  // 可选，分页参数
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "data": {
+        "courses": [
+            {
+                "id": 1,
+                "name": "课程名称",
+                "description": "课程描述",
+                "teacher": "教师姓名",
+                "created_at": "2023-01-01T00:00:00Z"
+            },
+            // 更多课程...
+        ],
+        "total": 100,
+        "page": 1,
+        "per_page": 10
+    }
+}
+            </pre>
+        </div>
+    </div>
+    
+    <div class="api-doc-item">
+        <h4>获取学习资源</h4>
+        <div class="api-details">
+            <p><strong>请求URL:</strong> <code>/api/v1/learning/resources</code></p>
+            <p><strong>请求方法:</strong> <code>GET</code></p>
+            <p><strong>请求头:</strong></p>
+            <pre>
+Authorization: Bearer {token}
+            </pre>
+            <p><strong>请求参数:</strong></p>
+            <pre>
+?course_id=1  // 可选，指定课程ID
+            </pre>
+            <p><strong>响应结果:</strong></p>
+            <pre>
+{
+    "success": true,
+    "data": {
+        "resources": [
+            {
+                "id": 1,
+                "title": "资源标题",
+                "type": "资源类型",
+                "url": "资源链接",
+                "course_id": 1,
+                "created_at": "2023-01-01T00:00:00Z"
+            },
+            // 更多资源...
+        ]
+    }
+}
+            </pre>
+        </div>
+    </div>
+</section>
+
+<section class="api-test-tool">
+    <h3>API测试工具</h3>
+    <p>您可以使用下面的工具测试API接口。</p>
+    <p><a href="{{ url_for('index') }}#api-test" class="btn">前往测试工具</a></p>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .api-doc-item {
+        background-color: #f9f9f9;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #3f51b5;
+    }
+    
+    .api-doc-item h4 {
+        margin-top: 0;
+        color: #3f51b5;
+    }
+    
+    .api-details p {
+        margin-bottom: 0.5rem;
+    }
+    
+    .api-details pre {
+        background-color: #f0f0f0;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+        margin: 0.5rem 0 1rem;
+    }
+    
+    .api-endpoints h3 {
+        margin-top: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .api-test-tool {
+        text-align: center;
+        padding: 2rem;
+        background-color: #f0f0f0;
+        border-radius: 6px;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %} 

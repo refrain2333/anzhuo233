@@ -11,6 +11,12 @@ from app import db
 # 创建蓝图
 user_bp = Blueprint('user', __name__)
 
+# 从check.py导入函数
+from app.api.v1.user.check import check_student_id_exists
+
+# 注册学号检查接口
+user_bp.route('/check', methods=['GET'])(check_student_id_exists)
+
 @user_bp.route("/profile", methods=["GET"])
 @requires_auth
 def get_profile():

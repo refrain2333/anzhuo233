@@ -47,6 +47,7 @@
 |-- /migrations                     # 数据库迁移文件
 |-- /tests                          # 测试文件
 |-- /docs                           # 文档
+|-- /scripts                        # 实用脚本
 |-- requirements.txt                # 项目依赖
 |-- run.py                          # 项目启动文件
 |-- .env                            # 环境变量配置文件
@@ -99,6 +100,32 @@
 
 应用将在 http://localhost:5000 运行
 
+## 数据库管理
+
+### 数据库初始化
+
+```bash
+# 检查数据库连接
+python scripts/check_db_connection.py
+
+# 创建数据库表
+python scripts/execute_sql.py
+```
+
+### 重置数据库
+
+```bash
+# 清空现有数据库并使用新的SQL文件重建结构
+python scripts/reset_database.py
+```
+
+### 数据迁移
+
+```bash
+# 迁移Auth0用户数据到新结构
+python scripts/migrate_auth0_data.py
+```
+
 ## API文档
 
 API文档将在完成开发后提供，或者可以通过访问 `/api/docs` 端点查看。
@@ -118,6 +145,13 @@ API文档将在完成开发后提供，或者可以通过访问 `/api/docs` 端�
   - 新增依赖：auth0-python, authlib, python-jose
   - 支持用户信息管理API
   - 添加前端页面模板
+
+- [2023-06-05] 数据库结构优化
+  - 优化用户表结构，更好地适配Auth0用户信息
+  - 增加用户表的新字段：nickname, auth0_sid, auth0_aud, auth0_iss等
+  - 增加相关索引提高查询性能
+  - 添加数据库重置和数据迁移脚本
+  - 更新Auth0回调处理函数
 
 ## 开发团队
 

@@ -34,7 +34,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ('password_hash',)
     
     # 关联对象
     profile = fields.Nested(UserProfileSchema, exclude=('user_id',))

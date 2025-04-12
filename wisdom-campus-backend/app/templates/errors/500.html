@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}服务器错误 - 智慧校园学习助手系统{% endblock %}
+
+{% block content %}
+<section class="error-container">
+    <div class="error-content">
+        <h2>500 - 服务器内部错误</h2>
+        <p>抱歉，服务器遇到了一个错误，无法完成您的请求。</p>
+        <p>我们已记录此错误，并将尽快修复。</p>
+        <p>您可以尝试以下操作：</p>
+        <ul>
+            <li>刷新页面，重试您的操作</li>
+            <li>清除浏览器缓存后重试</li>
+            <li>稍后再访问本页面</li>
+        </ul>
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn">返回首页</a>
+            <a href="{{ url_for('health') }}" class="btn">检查API状态</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .error-content {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .error-content h2 {
+        color: #f44336;
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .error-content ul {
+        list-style-position: inside;
+        text-align: left;
+        max-width: 400px;
+        margin: 1rem auto;
+    }
+    
+    .error-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .error-actions {
+        margin-top: 2rem;
+    }
+    
+    .error-actions .btn {
+        margin: 0 0.5rem;
+    }
+</style>
+{% endblock %} 

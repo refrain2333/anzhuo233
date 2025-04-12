@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 智慧校园学习助手系统{% endblock %}
+
+{% block content %}
+<section class="auth-container">
+    <div class="auth-card">
+        <h2>用户登录</h2>
+        <div class="auth-form">
+            <form id="login-form" data-api-form action="/api/v1/auth/login" method="POST">
+                <div class="form-group">
+                    <label for="student_id">学号</label>
+                    <input type="text" id="student_id" name="student_id" required placeholder="请输入学号">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required placeholder="请输入密码">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">登录</button>
+                    <div class="auth-links">
+                        <a href="{{ url_for('register') }}">没有账号？立即注册</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 2rem 1rem;
+    }
+    
+    .auth-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+    }
+    
+    .auth-card h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: #3f51b5;
+    }
+    
+    .auth-form {
+        margin-top: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .auth-links {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .auth-links a {
+        color: #3f51b5;
+        text-decoration: none;
+    }
+    
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+    
+    .register-now-btn {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #4caf50;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('login-form');
+        
+        loginForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const studentId = document.getElementById('student_id').value;
+            const password = document.getElementById('password').value;
+            
+            if (!studentId || !password) {
+                showMessage('请填写完整的登录信息', 'warning');
+                return;
+            }
+            
+            try {
+                // 先检查学号是否存在
+                const checkUserResponse = await fetch(`/api/v1/user/check?student_id=${studentId}`);
+                const checkUserResult = await checkUserResponse.json();
+                
+                if (!checkUserResult.success) {
+                    showMessage('系统错误，请稍后再试', 'error');
+                    return;
+                }
+                
+                const userData = checkUserResult.data || {};
+                
+                if (!userData.exists) {
+                    // 学号不存在，提示用户注册
+                    const msgContainer = document.querySelector('.auth-form');
+                    const existingMsg = document.querySelector('.user-not-found');
+                    
+                    if (existingMsg) {
+                        existingMsg.remove();
+                    }
+                    
+                    const msgElement = document.createElement('div');
+                    msgElement.className = 'user-not-found';
+                    msgElement.style.textAlign = 'center';
+                    msgElement.style.marginTop = '1.5rem';
+                    msgElement.style.padding = '1rem';
+                    msgElement.style.backgroundColor = '#fff3cd';
+                    msgElement.style.borderRadius = '4px';
+                    msgElement.style.color = '#856404';
+                    
+                    msgElement.innerHTML = `
+                        <p>该学号尚未注册！</p>
+                        <a href="/register" class="register-now-btn">立即注册</a>
+                    `;
+                    
+                    msgContainer.appendChild(msgElement);
+                    return;
+                }
+                
+                // 学号存在，继续登录流程
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,  // 发送学号，后端会自动转换为邮箱
+                        password: password
+                    })
+                });
+                
+                // 处理HTTP错误状态码
+                if (!response.ok) {
+                    let errorMessage = '登录失败，请稍后再试';
+                    
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        console.error('无法解析错误响应', e);
+                    }
+                    
+                    if (response.status === 401) {
+                        showMessage('密码错误，请重试', 'error');
+                    } else if (response.status === 404) {
+                        showMessage('用户不存在，请先注册', 'error');
+                    } else {
+                        showMessage(errorMessage, 'error');
+                    }
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 保存token
+                    if (result.data && result.data.token) {
+                        localStorage.setItem('auth_token', result.data.token);
+                    }
+                    
+                    showMessage('登录成功，即将跳转...', 'success');
+                    
+                    // 延迟跳转到首页
+                    setTimeout(function() {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showMessage(result.message || '登录失败，请检查账号密码', 'error');
+                }
+            } catch (error) {
+                console.error('登录错误', error);
+                showMessage('登录请求失败，请检查网络连接或稍后再试', 'error');
+            }
+        });
+    });
+</script>
+{% endblock %} 

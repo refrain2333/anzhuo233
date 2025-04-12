@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - 智慧校园学习助手系统{% endblock %}
+
+{% block content %}
+<section class="auth-container">
+    <div class="auth-card">
+        <h2>用户注册</h2>
+        <div class="auth-form">
+            <form id="register-form" data-api-form action="/api/v1/auth/register" method="POST">
+                <div class="form-group">
+                    <label for="student_id">学号</label>
+                    <input type="text" id="student_id" name="student_id" required placeholder="请输入学号（5-20位数字）">
+                    <small class="form-hint">学号必须为5-20位数字</small>
+                </div>
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" name="name" required placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" name="email" required placeholder="请输入邮箱地址">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required placeholder="请输入密码（至少8位）">
+                    <small class="form-hint">密码长度至少为8位</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">确认密码</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required placeholder="请再次输入密码">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">注册</button>
+                    <div class="auth-links">
+                        <a href="{{ url_for('login') }}">已有账号？立即登录</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 2rem 1rem;
+    }
+    
+    .auth-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 500px;
+        padding: 2rem;
+    }
+    
+    .auth-card h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: #3f51b5;
+    }
+    
+    .auth-form {
+        margin-top: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .form-hint {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .auth-links {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .auth-links a {
+        color: #3f51b5;
+        text-decoration: none;
+    }
+    
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+    
+    .error-message {
+        color: #f44336;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerForm = document.getElementById('register-form');
+        const studentIdInput = document.getElementById('student_id');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        
+        // 表单验证
+        function validateForm() {
+            let isValid = true;
+            
+            // 清除所有错误提示
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+            
+            // 验证学号（5-20位数字）
+            if (!/^\d{5,20}$/.test(studentIdInput.value)) {
+                showError(studentIdInput, '学号必须为5-20位数字');
+                isValid = false;
+            }
+            
+            // 验证密码长度
+            if (passwordInput.value.length < 8) {
+                showError(passwordInput, '密码长度至少为8位');
+                isValid = false;
+            }
+            
+            // 验证两次密码是否一致
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                showError(confirmPasswordInput, '两次输入的密码不一致');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // 显示字段错误信息
+        function showError(element, message) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'error-message';
+            errorElement.textContent = message;
+            
+            // 如果字段后面已经有提示信息，就在提示后面添加错误信息
+            const hint = element.nextElementSibling;
+            if (hint && hint.classList.contains('form-hint')) {
+                hint.parentNode.insertBefore(errorElement, hint.nextSibling);
+            } else {
+                element.parentNode.insertBefore(errorElement, element.nextSibling);
+            }
+        }
+        
+        // 注册表单提交处理
+        registerForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // 防止重复提交
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) {
+                return;
+            }
+            submitBtn.disabled = true;
+            
+            // 表单验证
+            if (!validateForm()) {
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // 准备提交数据
+            const formData = {
+                student_id: studentIdInput.value,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: passwordInput.value
+                // 专业暂时移除
+                // major_id: majorSelect.value || null
+            };
+            
+            try {
+                console.log('准备发送注册请求:', formData);
+                const response = await fetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    // 尝试读取错误响应的详细信息
+                    let errorText = '';
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData.message || '未知错误';
+                        console.error('注册请求失败:', errorData);
+                    } catch (e) {
+                        errorText = await response.text();
+                        console.error('无法解析错误响应:', errorText);
+                    }
+                    
+                    if (response.status === 400) {
+                        showMessage(`请检查注册信息: ${errorText}`, 'error');
+                    } else if (response.status === 409) {
+                        showMessage(`该学号或邮箱已被注册: ${errorText}`, 'error');
+                    } else if (response.status === 404 || response.status === 405) {
+                        showMessage('注册服务暂不可用，请稍后再试', 'error');
+                    } else {
+                        showMessage(`服务器错误 ${response.status}: ${errorText}`, 'error');
+                    }
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('注册响应:', result);
+                
+                if (result.success) {
+                    showMessage('注册成功，正在跳转到验证页面...', 'success');
+                    
+                    // 获取注册的email
+                    const email = formData.email;
+                    
+                    // 如果响应中包含auth0_id则使用，否则不传递此参数
+                    const auth0Id = result.data && result.data.auth0_id ? result.data.auth0_id : undefined;
+                    
+                    // 构建跳转URL（确保使用前端页面路径而不是API路径）
+                    // 使用encodeURIComponent确保URL参数正确编码
+                    const redirectUrl = auth0Id 
+                        ? `/verification-waiting?auth0_id=${encodeURIComponent(auth0Id)}&email=${encodeURIComponent(email)}`
+                        : `/verification-waiting?email=${encodeURIComponent(email)}`;
+                    
+                    console.log('准备跳转到:', redirectUrl);
+                    
+                    try {
+                        // 延迟跳转到验证邮件等待页面
+                        setTimeout(function() {
+                            console.log('执行跳转到:', redirectUrl);
+                            window.location.href = redirectUrl;
+                        }, 2000);
+                    } catch (redirectError) {
+                        console.error('跳转到验证页面失败:', redirectError);
+                        // 如果跳转失败，显示手动跳转提示
+                        showMessage('跳转失败，请点击<a href="' + redirectUrl + '">此处</a>手动跳转', 'warning');
+                    }
+                } else {
+                    showMessage(result.message || '注册失败，请检查输入信息', 'error');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('注册错误', error);
+                showMessage('注册请求失败，请检查网络连接或稍后再试', 'error');
+                submitBtn.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %} 
