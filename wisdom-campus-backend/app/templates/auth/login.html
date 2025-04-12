@@ -207,6 +207,13 @@
                     // 保存token
                     if (result.data && result.data.token) {
                         localStorage.setItem('auth_token', result.data.token);
+                        // 同时记录用户ID以便需要时使用
+                        if (result.data.user_id) {
+                            localStorage.setItem('user_id', result.data.user_id);
+                        }
+                        if (result.data.username) {
+                            localStorage.setItem('username', result.data.username);
+                        }
                     }
                     
                     showMessage('登录成功，即将跳转...', 'success');

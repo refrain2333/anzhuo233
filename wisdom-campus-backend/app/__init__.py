@@ -127,39 +127,39 @@ def create_app(config_class='app.config.development'):
         """学生仪表盘页面"""
         # 导入User模型
         from app.models.user import User
-
-        # 首先检查session中是否有user_id
-        user_id = session.get('user_id')
+        from flask_jwt_extended import decode_token, verify_jwt_in_request, get_jwt_identity, current_user
+        
+        # 首先尝试从请求中获取JWT令牌（前端传递）
         user = None
-
-        # 如果session中没有user_id，尝试从JWT令牌获取
-        if not user_id:
-            # 尝试从请求头获取JWT令牌
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                try:
-                    from flask_jwt_extended import decode_token
-                    token = auth_header.split(' ')[1]
-                    token_data = decode_token(token)
-                    user_id = token_data.get('sub')  # JWT中的subject是用户ID
-                    app.logger.info(f"从JWT令牌获取用户ID: {user_id}")
-                except Exception as e:
-                    app.logger.error(f"解析JWT令牌失败: {str(e)}")
-            
-            # 如果localStorage中有auth_token，尝试从中获取用户信息
-            # 这部分逻辑需要在前端JavaScript中实现
-
-        # 如果通过任何方式找到了user_id
-        if user_id:
+        auth_header = request.headers.get('Authorization', '')
+        
+        # 记录请求头信息，帮助调试
+        app.logger.info(f"仪表盘请求头: {dict(request.headers)}")
+        
+        if auth_header.startswith('Bearer '):
             try:
-                # 查询用户
-                user = User.query.get(user_id)
-                if user:
-                    app.logger.info(f"用户已登录: ID={user_id}, 名称={user.name}")
-                else:
-                    app.logger.warning(f"用户ID有效但未找到用户记录: {user_id}")
+                token = auth_header.split(' ')[1]
+                app.logger.info(f"从请求头获取到JWT令牌")
+                
+                # 解析JWT令牌
+                payload = decode_token(token)
+                user_id = payload.get('sub')  # JWT中的subject是用户ID
+                
+                if user_id:
+                    app.logger.info(f"从JWT令牌识别用户ID: {user_id}")
+                    user = User.query.get(user_id)
             except Exception as e:
-                app.logger.error(f"查询用户时发生错误: {str(e)}")
+                app.logger.error(f"解析JWT令牌失败: {str(e)}")
+
+        # 如果未通过JWT找到用户，则尝试从session中获取
+        if not user:
+            user_id = session.get('user_id')
+            if user_id:
+                try:
+                    user = User.query.get(user_id)
+                    app.logger.info(f"从会话中识别用户: ID={user_id}, 名称={user.name if user else 'Unknown'}")
+                except Exception as e:
+                    app.logger.error(f"从会话中获取用户信息失败: {str(e)}")
         
         # 即使未登录也允许访问仪表盘页面，但页面内容会根据是否登录而不同
         # 这样可以避免重定向循环，前端可以处理未登录状态

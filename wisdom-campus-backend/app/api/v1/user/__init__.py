@@ -7,6 +7,7 @@ from app.models.user import User, UserProfile, Major
 from app.schemas.user import user_schema, users_schema, user_update_schema, major_schema, majors_schema
 from sqlalchemy.exc import SQLAlchemyError
 from app import db
+import logging
 
 # 创建蓝图
 user_bp = Blueprint('user', __name__)
@@ -21,16 +22,34 @@ user_bp.route('/check', methods=['GET'])(check_student_id_exists)
 @requires_auth
 def get_profile():
     """获取当前用户的个人资料"""
+    logger = logging.getLogger(__name__)
+    
+    # 尝试从JWT令牌中获取用户信息
+    try:
+        jwt_user_id = get_jwt_identity()
+        if jwt_user_id:
+            logger.info(f"从JWT令牌中获取到用户ID: {jwt_user_id}")
+            user = User.query.get(jwt_user_id)
+            if user:
+                logger.info(f"通过JWT令牌找到用户: {user.name}")
+                result = user_schema.dump(user)
+                return jsonify(result)
+    except Exception as e:
+        logger.info(f"从JWT获取用户失败，尝试会话方式: {str(e)}")
+    
+    # 如果无法从JWT获取，则尝试从会话获取
     user_info = session.get('user', {}).get('userinfo', {})
     auth0_id = user_info.get('sub')
     
     if not auth0_id:
+        logger.warning("无法从JWT或会话中获取用户信息")
         return jsonify({"error": "无法获取用户信息"}), 400
     
     # 查询用户
     user = User.query.filter_by(auth0_id=auth0_id).first()
     
     if not user:
+        logger.warning(f"用户不存在: {auth0_id}")
         return jsonify({"error": "用户不存在"}), 404
     
     # 序列化用户数据

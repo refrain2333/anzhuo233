@@ -10,6 +10,7 @@ from app.models.user import User
 from app import db
 from app.utils.response import api_success, api_error
 from app.utils.error_codes import ErrorCode
+from flask_jwt_extended import create_access_token
 
 logger = logging.getLogger(__name__)
 
@@ -119,21 +120,30 @@ def api_login():
         session['email'] = email
         session['expires_at'] = (datetime.now() + timedelta(seconds=expires_in)).timestamp()
         
-        # 返回成功响应
-        return api_success(
-            message="登录成功",
-            data={
-                "user_id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "student_id": user.student_id,
-                "major_id": user.major_id,
-                "grade": user.grade,
-                "access_token": access_token,
-                "id_token": id_token,
-                "expires_in": expires_in
-            }
-        )
+        # 为用户生成JWT令牌
+        try:
+            # 如果用户存在，为其创建JWT令牌
+            # 确保用户ID作为身份标识符
+            access_token = create_access_token(identity=user.id)
+            
+            # 记录JWT令牌创建信息
+            logger.info(f"为用户 {user.student_id} 创建JWT令牌, 用户ID: {user.id}")
+            
+            # 返回成功响应
+            return api_success(
+                message="登录成功",
+                data={
+                    "token": access_token,
+                    "user_id": user.id,
+                    "username": user.name
+                }
+            )
+        except Exception as e:
+            logger.error(f"JWT令牌生成失败: {str(e)}")
+            return api_error(
+                message="登录过程中发生服务器错误",
+                error_code=ErrorCode.SERVER_ERROR
+            )
         
     except Exception as e:
         logger.error(f"登录过程中发生错误: {str(e)}")

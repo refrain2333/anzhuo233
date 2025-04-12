@@ -308,6 +308,61 @@
             font-size: 0.9rem;
         }
         
+        .not-logged-in {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+        
+        .login-prompt {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .login-prompt h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .login-prompt p {
+            margin-bottom: 1.5rem;
+            color: #666;
+        }
+        
+        .btn-login {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            margin-right: 1rem;
+        }
+        
+        .btn-login:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-register {
+            display: inline-block;
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .btn-register:hover {
+            background-color: #e5e9f0;
+        }
+        
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -329,137 +384,155 @@
         }
     </style>
 </head>
-<body>
+<body 
+    data-user-logged-in="{{ 'true' if user else 'false' }}" 
+    data-user-name="{{ user.name if user and user.name else '' }}" 
+    data-user-username="{{ user.username if user and user.username else '' }}" 
+    data-user-email="{{ user.email if user and user.email else '' }}">
+    
     <header>
         <div class="header-container">
             <div class="logo-text">智慧校园学习助手</div>
             <div class="user-info">
-                <div class="avatar">{{ user.username[0] if user and user.username else '学' }}</div>
-                <div class="user-name">{{ user.username if user else '同学' }}</div>
+                <div class="avatar" id="user-avatar">{{ user.username[0] if user and user.username else '学' }}</div>
+                <div class="user-name" id="user-name">{{ user.username if user else '同学' }}</div>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
     </header>
     
-    <main>
-        <section class="welcome-banner">
-            <h1 class="welcome-title">你好，{{ user.username if user else '同学' }}！</h1>
-            <p class="welcome-subtitle">欢迎回到你的学习中心。今天是 <span id="current-date"></span>，祝你学习愉快！</p>
-        </section>
-        
-        <div class="dashboard-grid">
-            <div class="dashboard-column">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">我的课程</h2>
-                        <a href="#" class="view-all">查看全部</a>
-                    </div>
-                    <ul class="course-list">
-                        <li class="course-item">
-                            <div class="course-name">高等数学（二）</div>
-                            <div class="course-info">
-                                <span>章节：7/12</span>
-                                <span>进度：58%</span>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar" style="width: 58%"></div>
-                            </div>
-                        </li>
-                        <li class="course-item">
-                            <div class="course-name">Python程序设计</div>
-                            <div class="course-info">
-                                <span>章节：10/16</span>
-                                <span>进度：62%</span>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar" style="width: 62%"></div>
-                            </div>
-                        </li>
-                        <li class="course-item">
-                            <div class="course-name">数据结构与算法</div>
-                            <div class="course-info">
-                                <span>章节：5/14</span>
-                                <span>进度：35%</span>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar" style="width: 35%"></div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="function-cards">
-                    <div class="function-card">
-                        <div class="function-icon">📝</div>
-                        <h3 class="function-title">学习计划</h3>
-                        <p class="function-desc">制定个性化学习计划</p>
-                    </div>
-                    <div class="function-card">
-                        <div class="function-icon">📚</div>
-                        <h3 class="function-title">学习资源</h3>
-                        <p class="function-desc">浏览课程资料和在线资源</p>
-                    </div>
-                    <div class="function-card">
-                        <div class="function-icon">📊</div>
-                        <h3 class="function-title">数据分析</h3>
-                        <p class="function-desc">查看学习数据统计与分析</p>
-                    </div>
-                    <div class="function-card">
-                        <div class="function-icon">👥</div>
-                        <h3 class="function-title">协作学习</h3>
-                        <p class="function-desc">参与小组讨论与协作项目</p>
-                    </div>
-                </div>
+    <main id="main-content">
+        <!-- 未登录状态下显示的内容 -->
+        <div id="not-logged-in" class="not-logged-in" style="display: none;">
+            <div class="login-prompt">
+                <h2>请先登录</h2>
+                <p>您需要登录后才能查看学生仪表盘内容</p>
+                <a href="/login" class="btn-login">立即登录</a>
+                <a href="/register" class="btn-register">注册账号</a>
             </div>
+        </div>
+        
+        <!-- 已登录状态下显示的内容 -->
+        <div id="logged-in-content">
+            <section class="welcome-banner">
+                <h1 class="welcome-title" id="welcome-title">你好，{{ user.username if user else '同学' }}！</h1>
+                <p class="welcome-subtitle">欢迎回到你的学习中心。今天是 <span id="current-date"></span>，祝你学习愉快！</p>
+            </section>
             
-            <div class="dashboard-column">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">今日课程</h2>
-                        <a href="#" class="view-all">查看周课表</a>
+            <div class="dashboard-grid">
+                <div class="dashboard-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">我的课程</h2>
+                            <a href="#" class="view-all">查看全部</a>
+                        </div>
+                        <ul class="course-list">
+                            <li class="course-item">
+                                <div class="course-name">高等数学（二）</div>
+                                <div class="course-info">
+                                    <span>章节：7/12</span>
+                                    <span>进度：58%</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 58%"></div>
+                                </div>
+                            </li>
+                            <li class="course-item">
+                                <div class="course-name">Python程序设计</div>
+                                <div class="course-info">
+                                    <span>章节：10/16</span>
+                                    <span>进度：62%</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 62%"></div>
+                                </div>
+                            </li>
+                            <li class="course-item">
+                                <div class="course-name">数据结构与算法</div>
+                                <div class="course-info">
+                                    <span>章节：5/14</span>
+                                    <span>进度：35%</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 35%"></div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
-                    <ul class="schedule-list">
-                        <li class="schedule-item">
-                            <div class="schedule-time">08:00-09:40</div>
-                            <div class="schedule-course">高等数学（二）</div>
-                            <div class="schedule-location">教学楼A-303</div>
-                        </li>
-                        <li class="schedule-item">
-                            <div class="schedule-time">10:00-11:40</div>
-                            <div class="schedule-course">Python程序设计</div>
-                            <div class="schedule-location">实验楼B-202</div>
-                        </li>
-                        <li class="schedule-item">
-                            <div class="schedule-time">14:00-15:40</div>
-                            <div class="schedule-course">大学英语（四）</div>
-                            <div class="schedule-location">教学楼C-405</div>
-                        </li>
-                        <li class="schedule-item">
-                            <div class="schedule-time">16:00-17:40</div>
-                            <div class="schedule-course">数据结构与算法</div>
-                            <div class="schedule-location">实验楼A-108</div>
-                        </li>
-                    </ul>
+                    
+                    <div class="function-cards">
+                        <div class="function-card">
+                            <div class="function-icon">📝</div>
+                            <h3 class="function-title">学习计划</h3>
+                            <p class="function-desc">制定个性化学习计划</p>
+                        </div>
+                        <div class="function-card">
+                            <div class="function-icon">📚</div>
+                            <h3 class="function-title">学习资源</h3>
+                            <p class="function-desc">浏览课程资料和在线资源</p>
+                        </div>
+                        <div class="function-card">
+                            <div class="function-icon">📊</div>
+                            <h3 class="function-title">数据分析</h3>
+                            <p class="function-desc">查看学习数据统计与分析</p>
+                        </div>
+                        <div class="function-card">
+                            <div class="function-icon">👥</div>
+                            <h3 class="function-title">协作学习</h3>
+                            <p class="function-desc">参与小组讨论与协作项目</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">学习提醒</h2>
+                <div class="dashboard-column">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">今日课程</h2>
+                            <a href="#" class="view-all">查看周课表</a>
+                        </div>
+                        <ul class="schedule-list">
+                            <li class="schedule-item">
+                                <div class="schedule-time">08:00-09:40</div>
+                                <div class="schedule-course">高等数学（二）</div>
+                                <div class="schedule-location">教学楼A-303</div>
+                            </li>
+                            <li class="schedule-item">
+                                <div class="schedule-time">10:00-11:40</div>
+                                <div class="schedule-course">Python程序设计</div>
+                                <div class="schedule-location">实验楼B-202</div>
+                            </li>
+                            <li class="schedule-item">
+                                <div class="schedule-time">14:00-15:40</div>
+                                <div class="schedule-course">大学英语（四）</div>
+                                <div class="schedule-location">教学楼C-405</div>
+                            </li>
+                            <li class="schedule-item">
+                                <div class="schedule-time">16:00-17:40</div>
+                                <div class="schedule-course">数据结构与算法</div>
+                                <div class="schedule-location">实验楼A-108</div>
+                            </li>
+                        </ul>
                     </div>
-                    <div style="padding: 0.5rem 0;">
-                        <p style="margin-bottom: 1rem;">🔔 数据结构作业截止日期: 明天23:59</p>
-                        <p style="margin-bottom: 1rem;">🔔 高等数学期中考试: 下周三 10:00</p>
-                        <p>🔔 Python项目提交: 本周五 18:00</p>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">学习提醒</h2>
+                        </div>
+                        <div style="padding: 0.5rem 0;">
+                            <p style="margin-bottom: 1rem;">🔔 数据结构作业截止日期: 明天23:59</p>
+                            <p style="margin-bottom: 1rem;">🔔 高等数学期中考试: 下周三 10:00</p>
+                            <p>🔔 Python项目提交: 本周五 18:00</p>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">学习进度</h2>
-                    </div>
-                    <div style="text-align: center; padding: 1rem 0;">
-                        <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 0.5rem;">52%</div>
-                        <p>本学期总体学习进度</p>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">学习进度</h2>
+                        </div>
+                        <div style="text-align: center; padding: 1rem 0;">
+                            <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 0.5rem;">52%</div>
+                            <p>本学期总体学习进度</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -471,6 +544,31 @@
     </footer>
 
     <script>
+        // 通用API请求函数，自动附加JWT令牌
+        function apiFetch(url, options = {}) {
+            // 获取JWT令牌
+            const token = localStorage.getItem('auth_token');
+            
+            // 准备请求选项
+            const fetchOptions = {
+                ...options,
+                headers: {
+                    ...options.headers
+                }
+            };
+            
+            // 如果有token，添加到请求头
+            if (token) {
+                console.log("添加Authorization头部到请求:", url);
+                fetchOptions.headers = {
+                    ...fetchOptions.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+            }
+            
+            return fetch(url, fetchOptions);
+        }
+        
         // 显示当前日期
         function updateCurrentDate() {
             const dateElement = document.getElementById('current-date');
@@ -482,7 +580,7 @@
         // 退出登录功能
         function logout() {
             // 发送退出请求到后端API
-            fetch('/api/v1/auth/logout', {
+            apiFetch('/api/v1/auth/logout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -490,22 +588,105 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // 退出成功，重定向到登录页面
-                    window.location.href = '/login';
-                } else {
-                    alert('退出失败：' + data.message);
-                }
+                // 无论成功与否，都清除本地存储的token
+                localStorage.removeItem('auth_token');
+                // 跳转到登录页面
+                window.location.href = '/login';
             })
             .catch(error => {
                 console.error('退出请求发生错误:', error);
-                alert('退出失败，请稍后重试');
+                // 即使发生错误，也清除token并跳转到登录页面
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login';
             });
+        }
+        
+        // 从body的data属性中获取用户数据
+        function getUserDataFromDOM() {
+            const body = document.body;
+            return {
+                isLoggedIn: body.getAttribute('data-user-logged-in') === 'true',
+                name: body.getAttribute('data-user-name') || '',
+                username: body.getAttribute('data-user-username') || '',
+                email: body.getAttribute('data-user-email') || ''
+            };
+        }
+        
+        // 检查用户是否已登录
+        function checkUserLoginStatus() {
+            // 获取DOM中的用户数据
+            const userData = getUserDataFromDOM();
+            console.log("服务器提供的用户信息:", userData);
+            
+            // 如果后端已提供用户信息，则使用后端数据
+            if (userData.isLoggedIn) {
+                console.log("用户已通过服务器会话登录");
+                return;
+            }
+            
+            // 否则尝试从localStorage获取token
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                console.log("本地没有存储的token，用户未登录");
+                showNotLoggedInContent();
+                return;
+            }
+            
+            console.log("发现本地存储的token，尝试获取用户信息");
+            
+            // 使用token获取用户信息
+            apiFetch('/api/v1/user/profile')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Token无效');
+                }
+                return response.json();
+            })
+            .then(userData => {
+                console.log("获取到用户信息:", userData);
+                // 更新页面上的用户信息
+                updateUserInfo(userData);
+            })
+            .catch(error => {
+                console.error("获取用户信息失败:", error);
+                // Token无效，清除并显示未登录界面
+                localStorage.removeItem('auth_token');
+                showNotLoggedInContent();
+            });
+        }
+        
+        // 更新页面上的用户信息
+        function updateUserInfo(userData) {
+            // 显示用户名
+            const nameElement = document.getElementById('user-name');
+            if (nameElement) {
+                nameElement.textContent = userData.name || userData.username || userData.email || '同学';
+            }
+            
+            // 更新欢迎信息
+            const welcomeTitle = document.getElementById('welcome-title');
+            if (welcomeTitle) {
+                welcomeTitle.textContent = `你好，${userData.name || userData.username || '同学'}！`;
+            }
+            
+            // 更新头像
+            const avatarElement = document.getElementById('user-avatar');
+            if (avatarElement) {
+                const firstLetter = (userData.name || userData.username || '学')[0];
+                avatarElement.textContent = firstLetter;
+            }
+        }
+        
+        // 显示未登录内容
+        function showNotLoggedInContent() {
+            document.getElementById('logged-in-content').style.display = 'none';
+            document.getElementById('not-logged-in').style.display = 'block';
         }
         
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             updateCurrentDate();
+            checkUserLoginStatus();
         });
     </script>
 </body>

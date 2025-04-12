@@ -73,7 +73,7 @@ def requires_auth(f):
                     "message": "未认证",
                     "error": "not_authenticated"
                 }), 401
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
 
@@ -120,7 +120,7 @@ def requires_verified_email(f):
                     "message": "未认证",
                     "error": "not_authenticated"
                 }), 401
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('login'))
         
         if not session['user'].get('userinfo', {}).get('email_verified', False):
             if request.is_json or request.headers.get('Accept') == 'application/json':
@@ -183,7 +183,7 @@ def requires_admin(f):
                     "message": "未认证",
                     "error": "not_authenticated"
                 }), 401
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('login'))
         
         # 检查用户是否为管理员
         user_info = session['user'].get('userinfo', {})
