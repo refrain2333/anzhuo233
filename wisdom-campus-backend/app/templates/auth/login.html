@@ -211,9 +211,9 @@
                     
                     showMessage('登录成功，即将跳转...', 'success');
                     
-                    // 延迟跳转到首页
+                    // 延迟跳转到学生仪表盘
                     setTimeout(function() {
-                        window.location.href = '/';
+                        window.location.href = '/student/dashboard';
                     }, 1500);
                 } else {
                     showMessage(result.message || '登录失败，请检查账号密码', 'error');

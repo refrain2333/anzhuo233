@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -6,6 +6,7 @@ from flask_marshmallow import Marshmallow
 from flask import render_template, request, jsonify
 from app.utils.response import api_success, api_error
 from app.utils.error_codes import ErrorCode
+from app.models.user import User
 
 # 初始化扩展，但不传入应用实例
 db = SQLAlchemy()
@@ -64,16 +65,27 @@ def create_app(config_class='app.config.development'):
     # 创建一个简单的路由用于测试
     @app.route('/')
     def index():
+        # 检查用户是否已登录（通过session或JWT）
+        if 'user_id' in session:
+            # 已登录用户，重定向到学生仪表盘
+            return redirect(url_for('student_dashboard'))
+        # 未登录用户，显示首页
         return render_template('index.html')
 
     @app.route('/login')
     def login():
         """登录页面"""
+        # 如果已登录，直接重定向到学生仪表盘
+        if 'user_id' in session:
+            return redirect(url_for('student_dashboard'))
         return render_template('auth/login.html')
         
     @app.route('/register')
     def register():
         """注册页面"""
+        # 如果已登录，直接重定向到学生仪表盘
+        if 'user_id' in session:
+            return redirect(url_for('student_dashboard'))
         return render_template('auth/register.html')
 
     @app.route('/verification-waiting')
@@ -110,6 +122,21 @@ def create_app(config_class='app.config.development'):
         def protected_admin():
             return render_template('admin/dashboard.html')
         return protected_admin()
+    
+    @app.route('/student/dashboard')
+    def student_dashboard():
+        """学生仪表盘页面"""
+        # 检查用户是否已登录
+        if 'user_id' not in session:
+            # 未登录用户重定向到登录页面
+            return redirect(url_for('login'))
+        
+        # 获取用户信息
+        user_id = session.get('user_id')
+        user = User.query.get(user_id)
+        
+        # 渲染学生仪表盘模板，传入用户信息
+        return render_template('student/dashboard.html', user=user)
     
     # 注册错误处理程序
     @app.errorhandler(404)
