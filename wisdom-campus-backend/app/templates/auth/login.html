@@ -213,8 +213,9 @@
                     
                     // 延迟跳转到学生仪表盘
                     setTimeout(function() {
+                        console.log("正在跳转到学生仪表盘...");
                         window.location.href = '/student/dashboard';
-                    }, 1500);
+                    }, 1000);
                 } else {
                     showMessage(result.message || '登录失败，请检查账号密码', 'error');
                 }
@@ -224,5 +225,51 @@
             }
         });
     });
+
+    // 确保showMessage函数存在
+    function showMessage(message, type) {
+        // 如果页面上已有消息提示，先移除
+        const existingAlert = document.querySelector('.alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // 创建消息元素
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert alert-${type}`;
+        alertElement.textContent = message;
+        alertElement.style.padding = '1rem';
+        alertElement.style.marginTop = '1rem';
+        alertElement.style.borderRadius = '4px';
+        alertElement.style.textAlign = 'center';
+        
+        // 根据类型设置不同的背景色
+        switch (type) {
+            case 'success':
+                alertElement.style.backgroundColor = '#d4edda';
+                alertElement.style.color = '#155724';
+                break;
+            case 'error':
+                alertElement.style.backgroundColor = '#f8d7da';
+                alertElement.style.color = '#721c24';
+                break;
+            case 'warning':
+                alertElement.style.backgroundColor = '#fff3cd';
+                alertElement.style.color = '#856404';
+                break;
+            default:
+                alertElement.style.backgroundColor = '#e2e3e5';
+                alertElement.style.color = '#383d41';
+        }
+        
+        // 将消息添加到表单下方
+        const form = document.getElementById('login-form');
+        form.parentNode.insertBefore(alertElement, form.nextSibling);
+        
+        // 3秒后自动移除消息
+        setTimeout(() => {
+            alertElement.remove();
+        }, 3000);
+    }
 </script>
 {% endblock %} 

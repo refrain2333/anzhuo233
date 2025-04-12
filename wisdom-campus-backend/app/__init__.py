@@ -1,17 +1,15 @@
 from flask import Flask, session, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_cors import CORS
-from flask_marshmallow import Marshmallow
 from flask import render_template, request, jsonify
 from app.utils.response import api_success, api_error
 from app.utils.error_codes import ErrorCode
-from app.models.user import User
+from app.extensions import db, migrate, ma
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-# 初始化扩展，但不传入应用实例
-db = SQLAlchemy()
-migrate = Migrate()
-ma = Marshmallow()
+# 不再在这里初始化扩展
+# db = SQLAlchemy()
+# migrate = Migrate()
+# ma = Marshmallow()
 
 def create_app(config_class='app.config.development'):
     """应用工厂函数"""
@@ -66,7 +64,8 @@ def create_app(config_class='app.config.development'):
     @app.route('/')
     def index():
         # 检查用户是否已登录（通过session或JWT）
-        if 'user_id' in session:
+        user_id = session.get('user_id')
+        if user_id:
             # 已登录用户，重定向到学生仪表盘
             return redirect(url_for('student_dashboard'))
         # 未登录用户，显示首页
@@ -126,16 +125,44 @@ def create_app(config_class='app.config.development'):
     @app.route('/student/dashboard')
     def student_dashboard():
         """学生仪表盘页面"""
-        # 检查用户是否已登录
-        if 'user_id' not in session:
-            # 未登录用户重定向到登录页面
-            return redirect(url_for('login'))
-        
-        # 获取用户信息
+        # 导入User模型
+        from app.models.user import User
+
+        # 首先检查session中是否有user_id
         user_id = session.get('user_id')
-        user = User.query.get(user_id)
+        user = None
+
+        # 如果session中没有user_id，尝试从JWT令牌获取
+        if not user_id:
+            # 尝试从请求头获取JWT令牌
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                try:
+                    from flask_jwt_extended import decode_token
+                    token = auth_header.split(' ')[1]
+                    token_data = decode_token(token)
+                    user_id = token_data.get('sub')  # JWT中的subject是用户ID
+                    app.logger.info(f"从JWT令牌获取用户ID: {user_id}")
+                except Exception as e:
+                    app.logger.error(f"解析JWT令牌失败: {str(e)}")
+            
+            # 如果localStorage中有auth_token，尝试从中获取用户信息
+            # 这部分逻辑需要在前端JavaScript中实现
+
+        # 如果通过任何方式找到了user_id
+        if user_id:
+            try:
+                # 查询用户
+                user = User.query.get(user_id)
+                if user:
+                    app.logger.info(f"用户已登录: ID={user_id}, 名称={user.name}")
+                else:
+                    app.logger.warning(f"用户ID有效但未找到用户记录: {user_id}")
+            except Exception as e:
+                app.logger.error(f"查询用户时发生错误: {str(e)}")
         
-        # 渲染学生仪表盘模板，传入用户信息
+        # 即使未登录也允许访问仪表盘页面，但页面内容会根据是否登录而不同
+        # 这样可以避免重定向循环，前端可以处理未登录状态
         return render_template('student/dashboard.html', user=user)
     
     # 注册错误处理程序
