@@ -42,6 +42,7 @@
 |   |-- /schemas                    # 数据序列化 schemas
 |   |-- /utils                      # 工具函数
 |   |-- /config                     # 配置管理
+|   |-- /templates                  # HTML模板
 |   |-- __init__.py                 # 应用工厂函数
 |-- /migrations                     # 数据库迁移文件
 |-- /tests                          # 测试文件
@@ -91,14 +92,7 @@
    - 复制`.env.example`为`.env`
    - 编辑`.env`文件，设置必要的环境变量
 
-6. 初始化数据库
-   ```
-   flask db init
-   flask db migrate
-   flask db upgrade
-   ```
-
-7. 运行应用
+6. 运行应用
    ```
    python run.py
    ```
@@ -108,6 +102,22 @@
 ## API文档
 
 API文档将在完成开发后提供，或者可以通过访问 `/api/docs` 端点查看。
+
+## 更新日志
+
+- [2023-05-28] 完成任务1：数据库配置与初始化
+  - 配置MySQL数据库连接
+  - 创建数据库表结构
+  - 验证数据库连接成功
+
+- [2023-05-30] 完成任务2：用户认证与信息管理模块（基于Auth0）
+  - 实现基于Auth0的用户认证系统
+  - 添加邮箱验证功能
+  - 实现用户个人资料管理
+  - 添加用户画像维护功能
+  - 新增依赖：auth0-python, authlib, python-jose
+  - 支持用户信息管理API
+  - 添加前端页面模板
 
 ## 开发团队
 
