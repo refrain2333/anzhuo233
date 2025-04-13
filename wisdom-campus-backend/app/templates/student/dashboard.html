@@ -71,10 +71,46 @@
             color: white;
             font-weight: bold;
             font-size: 1.2rem;
+            cursor: pointer;
         }
         
         .user-name {
             font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 10;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+        }
+        
+        .user-dropdown a {
+            color: var(--text-color);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s;
+        }
+        
+        .user-dropdown a:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .user-dropdown.show {
+            display: block;
         }
         
         .logout-btn {
@@ -114,6 +150,12 @@
         .welcome-subtitle {
             color: #666;
             margin-bottom: 1rem;
+        }
+        
+        .welcome-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
         
         .dashboard-grid {
@@ -384,18 +426,23 @@
         }
     </style>
 </head>
-<body 
-    data-user-logged-in="{{ 'true' if user else 'false' }}" 
-    data-user-name="{{ user.name if user and user.name else '' }}" 
-    data-user-username="{{ user.username if user and user.username else '' }}" 
-    data-user-email="{{ user.email if user and user.email else '' }}">
+<body data-user-logged-in="{{ 'true' if user else 'false' }}" 
+      data-user-name="{{ user.name if user else '' }}" 
+      data-user-email="{{ user.email if user else '' }}" 
+      data-user-student-id="{{ user.student_id if user else '' }}">
     
     <header>
         <div class="header-container">
-            <div class="logo-text">智慧校园学习助手</div>
+            <div class="logo-text">智慧校园学习助手系统</div>
             <div class="user-info">
-                <div class="avatar" id="user-avatar">{{ user.username[0] if user and user.username else '学' }}</div>
-                <div class="user-name" id="user-name">{{ user.username if user else '同学' }}</div>
+                <div class="avatar" id="user-avatar" onclick="navigateToProfile()"></div>
+                <div class="user-menu">
+                    <div class="user-name" id="user-name" onclick="toggleDropdown()">同学</div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="javascript:void(0)" onclick="navigateToProfile()">个人主页</a>
+                        <a href="#" onclick="logout(); return false;">退出登录</a>
+                    </div>
+                </div>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
@@ -413,12 +460,18 @@
         </div>
         
         <!-- 已登录状态下显示的内容 -->
-        <div id="logged-in-content">
-            <section class="welcome-banner">
-                <h1 class="welcome-title" id="welcome-title">你好，{{ user.username if user else '同学' }}！</h1>
-                <p class="welcome-subtitle">欢迎回到你的学习中心。今天是 <span id="current-date"></span>，祝你学习愉快！</p>
-            </section>
+        <div id="logged-in-content" style="display: none;">
+            <!-- 欢迎区域 -->
+            <div class="welcome-banner">
+                <h2 class="welcome-title">欢迎回来，<span id="welcome-name">同学</span>！</h2>
+                <p class="welcome-subtitle">今天是 <span id="current-date">2023年9月15日 星期五</span></p>
+                <p>这是您的个人学习仪表盘，这里汇总了您的学习进度和重要信息。</p>
+                <div class="welcome-actions">
+                    <a href="javascript:void(0)" onclick="navigateToProfile()" class="btn btn-primary">查看个人主页</a>
+                </div>
+            </div>
             
+            <!-- 仪表盘内容 -->
             <div class="dashboard-grid">
                 <div class="dashboard-column">
                     <div class="card">
@@ -544,6 +597,108 @@
     </footer>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("仪表盘页面初始化...");
+            
+            // 检查JWT令牌是否存在
+            const token = localStorage.getItem('auth_token');
+            console.log(`JWT令牌状态: ${token ? '已存在，长度: ' + token.length : '不存在'}`);
+            
+            // 拦截所有XHR请求，自动添加Authorization头
+            setupXHRInterceptor();
+            
+            // 如果存在令牌，手动设置一个Authorization头，确保服务器能识别用户
+            if (token) {
+                console.log("发现令牌，尝试立即进行用户验证");
+                // 创建一个隐藏的iframe来加载一个临时页面，这个页面会发送带Authorization头的请求
+                const verifyFrame = document.createElement('iframe');
+                verifyFrame.style.display = 'none';
+                verifyFrame.onload = function() {
+                    console.log("验证iframe已加载");
+                    // 加载后移除iframe
+                    setTimeout(function() {
+                        document.body.removeChild(verifyFrame);
+                    }, 1000);
+                };
+                document.body.appendChild(verifyFrame);
+                
+                // 设置iframe的src，使其发送一个带Authorization头的请求
+                // 添加verify_only=1确保只验证不渲染页面
+                verifyFrame.src = '/student/dashboard?auth_verify=1&verify_only=1&token=' + encodeURIComponent(token);
+            }
+            
+            // 初始化界面
+            updateCurrentDate();
+            initializeAvatar();
+            checkUserLoginStatus();
+            
+            console.log("仪表盘初始化完成");
+        });
+        
+        // 设置XHR拦截器，自动添加JWT令牌到所有请求
+        function setupXHRInterceptor() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                console.log("没有JWT令牌，不设置全局拦截器");
+                return;
+            }
+            
+            console.log("设置XHR拦截器，自动添加JWT令牌到所有请求");
+            
+            // 保存原始的XMLHttpRequest.open方法
+            const originalOpen = XMLHttpRequest.prototype.open;
+            
+            // 替换open方法，添加自定义逻辑
+            XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+                console.log(`XHR请求拦截: ${method} ${url}`);
+                
+                // 调用原始的open方法
+                originalOpen.apply(this, arguments);
+                
+                // 确保只对API请求添加令牌
+                if (url && (url.startsWith('/api/') || url.includes('/api/'))) {
+                    // 设置请求完成的回调
+                    this.addEventListener('loadend', function() {
+                        console.log(`XHR请求完成: ${method} ${url}, 状态码: ${this.status}`);
+                        if (this.status === 401) {
+                            // 如果收到401未授权响应，可能是令牌过期
+                            console.warn("收到401未授权响应，可能需要重新登录");
+                            
+                            // 清除无效令牌
+                            localStorage.removeItem('auth_token');
+                            localStorage.removeItem('user_id');
+                            localStorage.removeItem('username');
+                            
+                            // 显示未登录内容
+                            if (typeof showNotLoggedInContent === 'function') {
+                                showNotLoggedInContent();
+                            }
+                        }
+                    });
+                    
+                    // 添加Authorization头部
+                    this.setRequestHeader('Authorization', `Bearer ${token}`);
+                    console.log(`已添加JWT令牌到请求: ${method} ${url}`);
+                }
+            };
+            
+            console.log("XHR拦截器设置完成");
+        }
+        
+        // 初始化用户头像
+        function initializeAvatar() {
+            const avatarElement = document.getElementById('user-avatar');
+            const userData = getUserDataFromDOM();
+            
+            if (userData.isLoggedIn && userData.name) {
+                // 使用用户名首字母作为头像
+                avatarElement.textContent = userData.name.charAt(0).toUpperCase();
+            } else {
+                // 默认头像
+                avatarElement.textContent = "?";
+            }
+        }
+        
         // 通用API请求函数，自动附加JWT令牌
         function apiFetch(url, options = {}) {
             // 获取JWT令牌
@@ -553,20 +708,39 @@
             const fetchOptions = {
                 ...options,
                 headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     ...options.headers
                 }
             };
             
             // 如果有token，添加到请求头
             if (token) {
-                console.log("添加Authorization头部到请求:", url);
-                fetchOptions.headers = {
-                    ...fetchOptions.headers,
-                    'Authorization': `Bearer ${token}`
-                };
+                console.log(`添加Authorization头部到请求: ${url}`);
+                fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+            } else {
+                console.warn(`请求 ${url} 时没有找到令牌`);
             }
             
-            return fetch(url, fetchOptions);
+            return fetch(url, fetchOptions)
+                .then(response => {
+                    console.log(`收到 ${url} 响应状态码: ${response.status}`);
+                    // 如果收到401未授权响应，直接处理
+                    if (response.status === 401) {
+                        console.warn("收到401未授权响应，需要重新登录");
+                        // 清除无效令牌
+                        localStorage.removeItem('auth_token');
+                        localStorage.removeItem('user_id');
+                        localStorage.removeItem('username');
+                        // 显示未登录内容
+                        showNotLoggedInContent();
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    console.error(`请求 ${url} 失败:`, error);
+                    throw error;
+                });
         }
         
         // 显示当前日期
@@ -579,6 +753,8 @@
         
         // 退出登录功能
         function logout() {
+            console.log("执行登出操作...");
+            
             // 发送退出请求到后端API
             apiFetch('/api/v1/auth/logout', {
                 method: 'POST',
@@ -588,15 +764,31 @@
             })
             .then(response => response.json())
             .then(data => {
-                // 无论成功与否，都清除本地存储的token
+                console.log("登出响应:", data);
+                
+                // 清除所有本地存储的认证相关数据
                 localStorage.removeItem('auth_token');
-                // 跳转到登录页面
-                window.location.href = '/login';
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('username');
+                
+                console.log("已清除所有本地存储的认证数据");
+                
+                // 添加延迟防止网络问题
+                setTimeout(function() {
+                    // 跳转到登录页面
+                    console.log("正在跳转到登录页面...");
+                    window.location.href = '/login';
+                }, 300);
             })
             .catch(error => {
-                console.error('退出请求发生错误:', error);
+                console.error('登出请求发生错误:', error);
+                
                 // 即使发生错误，也清除token并跳转到登录页面
                 localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('username');
+                
+                console.log("发生错误，但已清除所有本地存储的认证数据");
                 window.location.href = '/login';
             });
         }
@@ -607,8 +799,8 @@
             return {
                 isLoggedIn: body.getAttribute('data-user-logged-in') === 'true',
                 name: body.getAttribute('data-user-name') || '',
-                username: body.getAttribute('data-user-username') || '',
-                email: body.getAttribute('data-user-email') || ''
+                email: body.getAttribute('data-user-email') || '',
+                student_id: body.getAttribute('data-user-student-id') || ''
             };
         }
         
@@ -621,6 +813,18 @@
             // 如果后端已提供用户信息，则使用后端数据
             if (userData.isLoggedIn) {
                 console.log("用户已通过服务器会话登录");
+                // 显示已登录内容
+                document.getElementById('logged-in-content').style.display = 'block';
+                document.getElementById('not-logged-in').style.display = 'none';
+                // 更新用户名称等信息
+                const nameElement = document.getElementById('user-name');
+                if (nameElement) {
+                    nameElement.textContent = userData.name || '同学';
+                }
+                const welcomeNameElement = document.getElementById('welcome-name');
+                if (welcomeNameElement) {
+                    welcomeNameElement.textContent = userData.name || '同学';
+                }
                 return;
             }
             
@@ -634,6 +838,15 @@
             
             console.log("发现本地存储的token，尝试获取用户信息");
             
+            // 检查URL中是否有auth_verify参数，这表示当前页面是验证iframe
+            const urlParams = new URLSearchParams(window.location.search);
+            const isVerifyFrame = urlParams.get('auth_verify') === '1';
+            
+            if (isVerifyFrame) {
+                console.log("当前是验证iframe，无需获取用户信息");
+                return;
+            }
+            
             // 使用token获取用户信息
             apiFetch('/api/v1/user/profile')
             .then(response => {
@@ -642,10 +855,17 @@
                 }
                 return response.json();
             })
-            .then(userData => {
-                console.log("获取到用户信息:", userData);
-                // 更新页面上的用户信息
-                updateUserInfo(userData);
+            .then(data => {
+                console.log("API返回数据:", data);
+                // 检查API响应格式
+                if (data.success && data.data) {
+                    console.log("获取到用户信息:", data.data);
+                    // 更新页面上的用户信息
+                    updateUserInfo(data.data);
+                } else {
+                    console.error("API返回格式不符合预期:", data);
+                    throw new Error('无效的API响应');
+                }
             })
             .catch(error => {
                 console.error("获取用户信息失败:", error);
@@ -663,31 +883,64 @@
                 nameElement.textContent = userData.name || userData.username || userData.email || '同学';
             }
             
-            // 更新欢迎信息
-            const welcomeTitle = document.getElementById('welcome-title');
-            if (welcomeTitle) {
-                welcomeTitle.textContent = `你好，${userData.name || userData.username || '同学'}！`;
+            // 显示欢迎标题中的用户名
+            const welcomeNameElement = document.getElementById('welcome-name');
+            if (welcomeNameElement) {
+                welcomeNameElement.textContent = userData.name || userData.username || userData.email || '同学';
             }
             
-            // 更新头像
+            // 显示用户头像（使用首字母）
             const avatarElement = document.getElementById('user-avatar');
             if (avatarElement) {
-                const firstLetter = (userData.name || userData.username || '学')[0];
-                avatarElement.textContent = firstLetter;
+                const nameFirstChar = (userData.name || userData.username || userData.email || '?').charAt(0).toUpperCase();
+                avatarElement.textContent = nameFirstChar;
             }
+            
+            // 显示已登录内容，隐藏未登录内容
+            document.getElementById('logged-in-content').style.display = 'block';
+            document.getElementById('not-logged-in').style.display = 'none';
         }
         
-        // 显示未登录内容
+        // 显示未登录界面
         function showNotLoggedInContent() {
             document.getElementById('logged-in-content').style.display = 'none';
             document.getElementById('not-logged-in').style.display = 'block';
         }
         
-        // 页面加载完成后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCurrentDate();
-            checkUserLoginStatus();
-        });
+        // 切换用户下拉菜单
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('show');
+        }
+        
+        // 点击页面其他地方关闭下拉菜单
+        window.onclick = function(event) {
+            if (!event.target.matches('.user-name')) {
+                var dropdowns = document.getElementsByClassName('user-dropdown');
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        
+        // 添加在JavaScript部分的末尾
+        function navigateToProfile() {
+            // 获取JWT令牌
+            const token = localStorage.getItem('auth_token');
+            
+            if (token) {
+                // 带令牌导航到个人主页，使用auth_verify参数但不使用verify_only参数
+                // 这样会验证用户并渲染HTML页面
+                console.log("导航到个人主页，附带令牌参数");
+                window.location.href = '/student/profile?auth_verify=1&token=' + encodeURIComponent(token);
+            } else {
+                // 无令牌时直接跳转，让后端决定如何处理
+                console.log("导航到个人主页，无令牌");
+                window.location.href = '/student/profile';
+            }
+        }
     </script>
 </body>
 </html> 

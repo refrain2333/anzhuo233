@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}管理员登录 - 智慧校园系统{% endblock %}
+
+{% block content %}
+<div class="admin-login-container">
+    <h2>管理员登录</h2>
+    
+    <form id="adminLoginForm" class="admin-login-form">
+        <div class="form-group">
+            <label for="username">用户名或学号</label>
+            <input type="text" id="username" name="username" required placeholder="请输入管理员用户名或学号">
+            <div id="usernameError" class="field-error"></div>
+        </div>
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required placeholder="请输入密码">
+            <div id="passwordError" class="field-error"></div>
+        </div>
+        <button type="submit" class="login-btn" id="loginButton">登录</button>
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-login-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+    
+    .admin-login-container h2 {
+        text-align: center;
+        color: #4A6FDC;
+        margin-bottom: 25px;
+        font-weight: 600;
+    }
+    
+    .admin-login-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .admin-login-form label {
+        font-weight: 500;
+        color: #333;
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    .admin-login-form input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    .admin-login-form input:focus {
+        border-color: #4A6FDC;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(74, 111, 220, 0.2);
+    }
+    
+    .login-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #4A6FDC;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .login-btn:hover {
+        background-color: #3558B9;
+    }
+    
+    .error-message {
+        color: #e74c3c;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: rgba(231, 76, 60, 0.1);
+        display: none;
+    }
+    
+    .field-error {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('adminLoginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        
+        loginForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // 禁用登录按钮，防止重复提交
+            loginButton.disabled = true;
+            loginButton.textContent = '登录中...';
+            errorMessage.style.display = 'none';
+            
+            // 获取表单数据
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (!username || !password) {
+                errorMessage.textContent = '请填写完整的登录信息';
+                errorMessage.style.display = 'block';
+                loginButton.disabled = false;
+                loginButton.textContent = '登录';
+                return;
+            }
+            
+            try {
+                // 显示请求发送信息
+                console.log('发送登录请求到: /api/v1/auth/admin_login');
+                
+                const response = await fetch('/api/v1/auth/admin_login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                // 检查HTTP状态码
+                if (!response.ok) {
+                    const status = response.status;
+                    console.error(`HTTP错误: ${status}`);
+                    let errorText = '';
+                    
+                    try {
+                        const errorResponse = await response.json();
+                        errorText = errorResponse.message || `服务器错误 (${status})`;
+                    } catch (e) {
+                        errorText = `服务器错误 (${status})`;
+                    }
+                    
+                    errorMessage.textContent = errorText;
+                    errorMessage.style.display = 'block';
+                    loginButton.disabled = false;
+                    loginButton.textContent = '登录';
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('登录响应:', result);
+                
+                if (result.success) {
+                    // 登录成功，保存token
+                    if (result.data && result.data.token) {
+                        localStorage.setItem('admin_token', result.data.token);
+                        
+                        // 同时写入cookie作为备份
+                        document.cookie = `admin_token=${result.data.token}; path=/`;
+                        
+                        // 显示成功消息
+                        errorMessage.textContent = '登录成功，正在跳转...';
+                        errorMessage.style.display = 'block';
+                        errorMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                        errorMessage.style.color = '#2ecc71';
+                        
+                        // 跳转到管理员仪表盘，添加login_success参数
+                        setTimeout(() => {
+                            window.location.href = '/admin?login_success=true';
+                        }, 1000);
+                    } else {
+                        errorMessage.textContent = '登录成功但未返回有效令牌';
+                        errorMessage.style.display = 'block';
+                    }
+                } else {
+                    // 登录失败
+                    errorMessage.textContent = result.message || '登录失败，请检查用户名和密码';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录请求失败', error);
+                errorMessage.textContent = '网络错误，请稍后再试';
+                errorMessage.style.display = 'block';
+            }
+            
+            // 恢复登录按钮
+            loginButton.disabled = false;
+            loginButton.textContent = '登录';
+        });
+    });
+</script>
+{% endblock %} 

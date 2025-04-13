@@ -9,6 +9,7 @@ from flask import session, redirect, request, url_for, current_app, flash, jsoni
 from jose import jwt
 import os
 from datetime import datetime
+import logging
 
 def get_auth0_token():
     """
@@ -39,42 +40,77 @@ def requires_auth(f):
     """
     验证用户是否已登录的装饰器
     支持两种认证方式：
-    1. 会话认证（网页模式）
-    2. Bearer令牌认证（API模式）
+    1. 自定义JWT令牌（API模式，优先）
+    2. 会话认证（网页模式，备选）
     """
     @wraps(f)
     def decorated(*args, **kwargs):
-        # 先检查API认证模式
+        logger = logging.getLogger(__name__)
+        
+        # 先检查API认证模式（JWT令牌）
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
-            token = auth_header.split('Bearer ')[1]
             try:
+                from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
+                
                 # 验证JWT令牌
-                payload = validate_token(token)
-                # 将用户信息保存到request对象中，供后续使用
-                request.jwt_payload = payload
+                verify_jwt_in_request()
+                
+                # 获取用户ID
+                user_id = get_jwt_identity()
+                logger.info(f"JWT认证成功，用户ID: {user_id}")
+                
+                # 获取额外声明
+                try:
+                    jwt_data = get_jwt()
+                    logger.info(f"JWT额外信息: {jwt_data.get('name', 'unknown')}, {jwt_data.get('email', 'unknown')}")
+                except Exception as jwt_error:
+                    logger.warning(f"获取JWT额外信息失败: {str(jwt_error)}")
+                
+                # 认证成功，继续执行被装饰的函数
+                # 可选：从数据库获取用户信息并放入请求上下文
+                try:
+                    from app.models.user import User
+                    # 确保用户ID是整数
+                    if isinstance(user_id, str) and user_id.isdigit():
+                        user_id = int(user_id)
+                    user = User.query.get(user_id)
+                    if user:
+                        request.user = user
+                except Exception as db_error:
+                    logger.warning(f"从数据库获取用户信息失败: {str(db_error)}")
+                
                 return f(*args, **kwargs)
-            except Exception as e:
-                # 令牌验证失败，检查是否请求期望返回JSON
+            except Exception as jwt_error:
+                # JWT令牌验证失败
+                logger.warning(f"JWT认证失败: {str(jwt_error)}")
+                
+                # 对API请求返回JSON错误响应
                 if request.is_json or request.headers.get('Accept') == 'application/json':
                     return jsonify({
                         "success": False,
-                        "message": f"认证失败: {str(e)}",
+                        "message": "认证失败，请重新登录",
                         "error": "invalid_token"
                     }), 401
-                # 如果不是API请求，回退到会话认证
         
-        # 会话认证模式
-        if 'user' not in session:
-            # 检查是否请求期望返回JSON
-            if request.is_json or request.headers.get('Accept') == 'application/json':
-                return jsonify({
-                    "success": False,
-                    "message": "未认证",
-                    "error": "not_authenticated"
-                }), 401
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
+        # 会话认证模式（后备方案）
+        user_id = session.get('user_id')
+        if user_id:
+            logger.info(f"会话认证成功，用户ID: {user_id}")
+            return f(*args, **kwargs)
+        
+        # 认证失败，检查是否API请求
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({
+                "success": False,
+                "message": "未认证，请先登录",
+                "error": "not_authenticated"
+            }), 401
+        
+        # 网页请求重定向到登录页面
+        logger.info(f"认证失败，重定向到登录页面")
+        return redirect(url_for('login'))
+    
     return decorated
 
 def requires_verified_email(f):
@@ -138,35 +174,78 @@ def requires_verified_email(f):
 def requires_admin(f):
     """
     验证用户是否为管理员的装饰器
-    支持两种认证方式
+    支持两种认证方式：
+    1. 自定义JWT令牌（API模式，优先）
+    2. 会话认证（网页模式，备选）
     """
     @wraps(f)
     def decorated(*args, **kwargs):
+        logger = logging.getLogger(__name__)
+        
         # 先检查API认证模式
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
-            token = auth_header.split('Bearer ')[1]
             try:
-                # 验证JWT令牌
-                payload = validate_token(token)
-                # 检查用户是否为管理员
-                from app.models.user import User
-                auth0_id = payload.get('sub')
-                user = User.query.filter_by(auth0_id=auth0_id).first()
+                # 使用flask_jwt_extended直接验证
+                from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
                 
-                if not user or not user.is_admin:
+                # 验证JWT令牌
+                verify_jwt_in_request()
+                
+                # 获取用户ID和额外数据
+                user_id = get_jwt_identity()
+                jwt_data = get_jwt()
+                
+                logger.info(f"JWT验证成功，用户ID: {user_id}")
+                logger.info(f"JWT额外数据: {jwt_data.get('is_admin')}, {jwt_data.get('email')}")
+                
+                # 先检查JWT本身是否有管理员标记
+                if not jwt_data.get('is_admin', False):
+                    logger.warning(f"JWT不包含管理员标记")
                     if request.is_json or request.headers.get('Accept') == 'application/json':
                         return jsonify({
                             "success": False,
                             "message": "您没有管理员权限",
                             "error": "not_admin"
                         }), 403
+                    flash('您没有管理员权限', 'danger')
+                    return redirect(url_for('login'))
                 
-                # 将用户信息保存到request对象中，供后续使用
-                request.jwt_payload = payload
+                # 查找用户 - 使用用户ID而不是auth0_id
+                from app.models.user import User
+                # 确保用户ID是整数
+                if isinstance(user_id, str) and user_id.isdigit():
+                    user_id = int(user_id)
+                
+                user = User.query.get(user_id)
+                
+                if not user:
+                    logger.warning(f"找不到用户ID: {user_id}")
+                    if request.is_json or request.headers.get('Accept') == 'application/json':
+                        return jsonify({
+                            "success": False,
+                            "message": "用户不存在",
+                            "error": "user_not_found"
+                        }), 404
+                    return redirect(url_for('login'))
+                
+                if not user.is_admin:
+                    logger.warning(f"用户 {user.name} 不是管理员")
+                    if request.is_json or request.headers.get('Accept') == 'application/json':
+                        return jsonify({
+                            "success": False,
+                            "message": "您没有管理员权限",
+                            "error": "not_admin"
+                        }), 403
+                    flash('您没有管理员权限', 'danger')
+                    return redirect(url_for('login'))
+                
+                # 验证通过，将用户信息放入请求上下文中
+                request.user = user
                 return f(*args, **kwargs)
             except Exception as e:
                 # 令牌验证失败
+                logger.error(f"JWT验证失败: {str(e)}")
                 if request.is_json or request.headers.get('Accept') == 'application/json':
                     return jsonify({
                         "success": False,

@@ -68,10 +68,10 @@ def api_login():
         domain = current_app.config.get('AUTH0_DOMAIN')
         client_id = current_app.config.get('AUTH0_CLIENT_ID')
         client_secret = current_app.config.get('AUTH0_CLIENT_SECRET')
-        audience = current_app.config.get('AUTH0_AUDIENCE')
+        audience = current_app.config.get('AUTH0_API_AUDIENCE')
         
         # 记录Auth0配置信息(不包含敏感信息)
-        logger.info(f"Auth0配置: domain={domain}, 使用邮箱={email}")
+        logger.info(f"Auth0配置: domain={domain}, 使用邮箱={email}, audience={audience}")
         
         # 尝试使用/oauth/token端点进行认证
         try:
@@ -84,7 +84,8 @@ def api_login():
                 "username": email,
                 "password": password,
                 "realm": "Username-Password-Authentication",  # 修改为Auth0实际的连接名称
-                "scope": "openid profile email"
+                "scope": "openid profile email",
+                "audience": audience
             }
             
             auth_headers = {
@@ -361,7 +362,7 @@ def api_register():
         domain = current_app.config.get('AUTH0_DOMAIN')
         client_id = current_app.config.get('AUTH0_CLIENT_ID')
         client_secret = current_app.config.get('AUTH0_CLIENT_SECRET')
-        audience = current_app.config.get('AUTH0_AUDIENCE')
+        audience = current_app.config.get('AUTH0_API_AUDIENCE')
         
         logger.info(f"Auth0配置: domain={domain}, client_id={'已设置' if client_id else '未设置'}")
         

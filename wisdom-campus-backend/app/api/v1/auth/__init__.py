@@ -21,6 +21,7 @@ from app.api.v1.auth.email_verification import api_resend_verification, check_em
 from app.api.v1.auth.password import api_forgot_password, api_change_password
 from app.api.v1.auth.register import cancel_registration
 from app.api.v1.auth.setup import setup_auth0
+from app.api.v1.auth.login import api_admin_login, api_check_admin
 
 # 注册路由
 # 登录注册相关
@@ -29,6 +30,10 @@ auth_bp.route("/register", methods=["POST"])(api_register)
 auth_bp.route("/logout", methods=["POST"])(api_logout)
 auth_bp.route("/refresh-token", methods=["POST"])(api_refresh_token)
 auth_bp.route("/verify-token", methods=["GET"])(verify_token)
+
+# 管理员相关
+auth_bp.route("/admin_login", methods=["POST"])(api_admin_login)
+auth_bp.route("/check_admin", methods=["GET"])(api_check_admin)
 
 # 邮箱验证相关
 auth_bp.route("/send-verification", methods=["POST"])(api_send_verification_email)

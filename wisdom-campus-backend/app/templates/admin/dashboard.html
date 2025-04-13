@@ -1,187 +1,597 @@
 {% extends "base.html" %}
 
-{% block title %}管理控制台 - 智慧校园学习助手系统{% endblock %}
+{% block title %}管理员控制台 - 智慧校园系统{% endblock %}
 
 {% block content %}
-<section class="admin-header">
-    <h2>管理员控制台</h2>
-    <p>欢迎访问管理控制台，您可以在这里管理系统资源和用户。</p>
-</section>
-
-<section class="admin-dashboard">
-    <div class="dashboard-grid">
-        <div class="dashboard-card">
-            <h3>用户管理</h3>
-            <p>管理系统用户、权限和角色</p>
-            <div class="card-actions">
-                <button class="btn" id="load-users">加载用户列表</button>
-            </div>
-            <div class="data-table-container">
-                <table id="users-table" class="data-table">
-                    <thead>
-                        <tr>
-                            <th>用户ID</th>
-                            <th>用户名</th>
-                            <th>邮箱</th>
-                            <th>角色</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5">请点击"加载用户列表"按钮</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<div class="admin-dashboard">
+    <div class="admin-header">
+        <h2>用户管理</h2>
+        <div class="admin-user">
+            <div class="admin-avatar" id="adminAvatar">A</div>
+            <span class="admin-username" id="adminName">管理员</span>
+            <button id="logoutBtn" class="logout-btn">退出登录</button>
+        </div>
+    </div>
+    
+    <div class="admin-card">
+        <h3>所有用户</h3>
+        <p>系统中注册的用户列表</p>
+        
+        <div class="table-responsive">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>学号</th>
+                        <th>专业</th>
+                        <th>邮箱</th>
+                        <th>注册时间</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         
-        <div class="dashboard-card">
-            <h3>课程管理</h3>
-            <p>管理系统课程和学习资源</p>
-            <div class="card-actions">
-                <button class="btn" id="load-courses">加载课程列表</button>
-            </div>
-            <div class="data-table-container">
-                <table id="courses-table" class="data-table">
-                    <thead>
-                        <tr>
-                            <th>课程ID</th>
-                            <th>课程名称</th>
-                            <th>教师</th>
-                            <th>状态</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5">请点击"加载课程列表"按钮</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <div class="pagination" id="userPagination"></div>
     </div>
-</section>
+</div>
+{% endblock %}
 
-<section class="system-status">
-    <h3>系统状态</h3>
-    <div class="status-container">
-        <div class="status-item">
-            <h4>API状态</h4>
-            <p id="api-status">检查中...</p>
-        </div>
-        <div class="status-item">
-            <h4>数据库连接</h4>
-            <p id="db-status">检查中...</p>
-        </div>
-        <div class="status-item">
-            <h4>缓存状态</h4>
-            <p id="cache-status">检查中...</p>
-        </div>
-    </div>
-</section>
+{% block extra_css %}
+<style>
+    .admin-dashboard {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .admin-header h2 {
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .admin-header .admin-user {
+        display: flex;
+        align-items: center;
+    }
+    
+    .admin-header .admin-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    
+    .admin-username {
+        font-weight: 500;
+    }
+    
+    .logout-btn {
+        margin-left: 15px;
+        padding: 6px 12px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .logout-btn:hover {
+        background-color: #c0392b;
+    }
+    
+    .admin-card {
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .admin-card h3 {
+        margin-top: 0;
+        color: #2c3e50;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .user-table th,
+    .user-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .user-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .user-table tr:hover {
+        background-color: #f5f7fa;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding: 0;
+        margin-top: 20px;
+    }
+    
+    .pagination li {
+        margin: 0 5px;
+    }
+    
+    .pagination button {
+        padding: 6px 12px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .pagination button.active {
+        background-color: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 加载用户列表
-        const loadUsersBtn = document.getElementById('load-users');
-        const usersTable = document.getElementById('users-table').querySelector('tbody');
+    // 从cookie获取值的辅助函数
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+    
+    // 删除cookie的辅助函数
+    function deleteCookie(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+    
+    // 防止循环重定向
+    (function() {
+        // 检查是否从登录页面重定向过来
+        const isFromLogin = window.location.search.includes('login_success=true');
+        // 检查是否存在防重定向标记cookie
+        const preventRedirect = getCookie('prevent_redirect_loop') === 'true';
         
-        loadUsersBtn.addEventListener('click', async function() {
-            try {
-                usersTable.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
-                
-                const response = await fetch('/api/v1/user/list');
-                const data = await response.json();
-                
-                if (data.success && data.users) {
-                    let html = '';
-                    data.users.forEach(user => {
-                        html += `
-                        <tr>
-                            <td>${user.id}</td>
-                            <td>${user.username}</td>
-                            <td>${user.email}</td>
-                            <td>${user.role}</td>
-                            <td>
-                                <button class="btn-small" data-id="${user.id}">编辑</button>
-                                <button class="btn-small btn-danger" data-id="${user.id}">删除</button>
-                            </td>
-                        </tr>
-                        `;
-                    });
-                    usersTable.innerHTML = html;
-                } else {
-                    usersTable.innerHTML = '<tr><td colspan="5">加载失败: ' + (data.message || '未知错误') + '</td></tr>';
-                }
-            } catch (error) {
-                usersTable.innerHTML = '<tr><td colspan="5">加载失败: ' + error.message + '</td></tr>';
-            }
-        });
-        
-        // 加载课程列表
-        const loadCoursesBtn = document.getElementById('load-courses');
-        const coursesTable = document.getElementById('courses-table').querySelector('tbody');
-        
-        loadCoursesBtn.addEventListener('click', async function() {
-            try {
-                coursesTable.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
-                
-                const response = await fetch('/api/v1/learning/courses');
-                const data = await response.json();
-                
-                if (data.success && data.courses) {
-                    let html = '';
-                    data.courses.forEach(course => {
-                        html += `
-                        <tr>
-                            <td>${course.id}</td>
-                            <td>${course.name}</td>
-                            <td>${course.teacher}</td>
-                            <td>${course.status}</td>
-                            <td>
-                                <button class="btn-small" data-id="${course.id}">编辑</button>
-                                <button class="btn-small btn-danger" data-id="${course.id}">删除</button>
-                            </td>
-                        </tr>
-                        `;
-                    });
-                    coursesTable.innerHTML = html;
-                } else {
-                    coursesTable.innerHTML = '<tr><td colspan="5">加载失败: ' + (data.message || '未知错误') + '</td></tr>';
-                }
-            } catch (error) {
-                coursesTable.innerHTML = '<tr><td colspan="5">加载失败: ' + error.message + '</td></tr>';
-            }
-        });
-        
-        // 检查系统状态
-        async function checkSystemStatus() {
-            // 检查API状态
-            const apiStatus = document.getElementById('api-status');
-            try {
-                const apiResponse = await fetch('/health');
-                const apiData = await apiResponse.json();
-                apiStatus.textContent = apiData.status === 'ok' ? '正常运行' : '异常';
-                apiStatus.className = apiData.status === 'ok' ? 'status-ok' : 'status-error';
-            } catch (error) {
-                apiStatus.textContent = '连接失败';
-                apiStatus.className = 'status-error';
-            }
-            
-            // 模拟检查数据库和缓存状态
-            // 实际应用中应该有专门的API端点
-            document.getElementById('db-status').textContent = '正常连接';
-            document.getElementById('db-status').className = 'status-ok';
-            
-            document.getElementById('cache-status').textContent = '正常运行';
-            document.getElementById('cache-status').className = 'status-ok';
+        // 如果是从登录页面重定向来的或有防重定向标记，则跳过token检查
+        if (isFromLogin || preventRedirect) {
+            console.log('检测到登录成功参数或防重定向标记，跳过重定向检查');
+            return; // 直接返回，不执行下面的token检查
         }
         
-        checkSystemStatus();
+        let adminToken = localStorage.getItem('admin_token');
+        if (!adminToken) {
+            adminToken = getCookie('admin_token');
+            // 如果在cookie中找到了token，保存到localStorage中
+            if (adminToken) {
+                localStorage.setItem('admin_token', adminToken);
+                console.log('已从cookie中恢复token到localStorage');
+            }
+        }
+        
+        if (!adminToken) {
+            console.log('无有效登录令牌，即将重定向到登录页面');
+            // 设置标记，避免循环重定向
+            sessionStorage.setItem('admin_redirecting', 'true');
+            // 延迟执行重定向，给页面其他脚本一些时间
+            setTimeout(function() {
+                window.location.href = '/admin/login';
+            }, 100);
+        } else {
+            console.log('找到登录令牌，继续加载页面');
+        }
+    })();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 页面元素
+        const userTableBody = document.getElementById('userTableBody');
+        const userPagination = document.getElementById('userPagination');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // 当前页码和每页数量
+        let currentPage = 1;
+        const perPage = 10;
+        
+        // 检查管理员登录状态 - 仅当不是从登录页面重定向来的才检查
+        if (!window.location.search.includes('login_success=true')) {
+            checkAdminLoginStatus();
+        } else {
+            // 从URL中移除login_success参数，避免刷新页面时重复处理
+            if (window.history && window.history.replaceState) {
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+                console.log('已移除URL中的login_success参数');
+            }
+            
+            // 直接加载用户列表，不重新验证登录状态
+            console.log('登录成功重定向，直接加载用户数据');
+            loadUsers(1);
+        }
+        
+        // 绑定登出事件
+        logoutBtn.addEventListener('click', logout);
+        
+        // 检查管理员登录状态函数
+        function checkAdminLoginStatus() {
+            // 从localStorage或cookie获取token
+            let adminToken = localStorage.getItem('admin_token');
+            if (!adminToken) {
+                adminToken = getCookie('admin_token');
+                if (adminToken) {
+                    // 如果在cookie中找到token，保存到localStorage
+                    localStorage.setItem('admin_token', adminToken);
+                }
+            }
+            
+            if (!adminToken) {
+                console.error('未找到管理员令牌');
+                showLoginError('未找到有效的登录凭证，请重新登录');
+                return;
+            }
+            
+            // 验证管理员身份
+            fetch('/api/v1/auth/check_admin', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.removeItem('admin_token');
+                        deleteCookie('admin_token');
+                        throw new Error('认证失败，请重新登录');
+                    } else {
+                        throw new Error('验证管理员身份时发生错误');
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log('管理员身份验证成功', data);
+                    if (data.data && data.data.admin) {
+                        // 更新页面上的管理员信息
+                        if (adminName) {
+                            adminName.textContent = data.data.admin.name || '管理员';
+                        }
+                        
+                        // 设置头像第一个字母
+                        const avatar = document.getElementById('adminAvatar');
+                        if (avatar && data.data.admin.name) {
+                            avatar.textContent = data.data.admin.name.charAt(0).toUpperCase();
+                        }
+                        
+                        // 加载用户列表
+                        loadUsers(1);
+                    }
+                } else {
+                    throw new Error(data.message || '管理员身份验证失败');
+                }
+            })
+            .catch(error => {
+                console.error('管理员身份验证错误:', error);
+                // 不要立即重定向，而是显示错误信息
+                showLoginError(error.message);
+            });
+        }
+        
+        // 显示登录错误，而不是立即重定向
+        function showLoginError(message) {
+            if (userTableBody) {
+                userTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">${message}，请<a href="/admin/login">重新登录</a></td></tr>`;
+            }
+            
+            // 设置标记，避免自动跳转
+            sessionStorage.setItem('admin_login_error', 'true');
+        }
+        
+        // 登出函数
+        function logout() {
+            console.log('用户点击了退出登录按钮');
+            // 可选：添加一个简单的确认，避免意外点击
+            if (confirm('确定要退出管理员账号吗？')) {
+                console.log('用户确认退出');
+                
+                // 清除保存的token
+                localStorage.removeItem('admin_token');
+                deleteCookie('admin_token');
+                
+                // 显示退出提示（可选）
+                alert('您已成功退出管理员账号');
+                
+                // 重定向到登录页面
+                window.location.href = '/admin/login';
+            } else {
+                console.log('用户取消了退出操作');
+            }
+        }
+        
+        // 加载用户列表
+        function loadUsers(page = 1) {
+            // 从localStorage或cookie获取token
+            let adminToken = localStorage.getItem('admin_token');
+            if (!adminToken) {
+                adminToken = getCookie('admin_token');
+                if (adminToken) {
+                    localStorage.setItem('admin_token', adminToken);
+                    console.log('已从cookie中恢复token到localStorage');
+                }
+            }
+            
+            if (!adminToken) {
+                console.error('loadUsers: 未找到管理员令牌');
+                // 设置错误消息而不是立即重定向
+                userTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">未找到登录凭证，请<a href="/admin/login">重新登录</a></td></tr>`;
+                userPagination.innerHTML = '';
+                return;
+            }
+
+            userTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">加载中...</td></tr>';
+            
+            const url = `/api/v1/user/admin/users?page=${page}`;
+            console.log(`获取用户列表: ${url}`);
+            console.log(`使用管理员令牌: ${adminToken.substring(0, 15)}...`); // 只打印令牌前15个字符
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log(`获取用户列表响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    console.error(`获取用户列表失败: ${response.status}`);
+                    if (response.status === 401 || response.status === 403) {
+                        // 认证问题，但不立即重定向，而是显示错误消息
+                        userTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">认证失败，请<a href="/admin/login">重新登录</a></td></tr>`;
+                        userPagination.innerHTML = '';
+                        
+                        // 清除无效的token
+                        localStorage.removeItem('admin_token');
+                        deleteCookie('admin_token');
+                    } else {
+                        throw new Error('网络响应错误: ' + response.status);
+                    }
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // 如果之前的处理返回了null，直接退出
+                
+                console.log('获取用户列表成功，响应数据:', data);
+                
+                if (data.success) {
+                    // 处理可能的Decimal类型字段
+                    if (data.data && data.data.users && Array.isArray(data.data.users)) {
+                        // 打印调试信息
+                        console.log('处理前的用户数据:', JSON.stringify(data.data.users));
+                        
+                        data.data.users.forEach(user => {
+                            // 转换GPA
+                            if (user.gpa !== undefined) {
+                                if (typeof user.gpa === 'string') {
+                                    user.gpa = parseFloat(user.gpa);
+                                    console.log(`转换用户 ${user.id} 的GPA: ${user.gpa}`);
+                                }
+                            }
+                            
+                            // 其他可能的Decimal字段转换
+                            if (user.total_study_time !== undefined && typeof user.total_study_time === 'string') {
+                                user.total_study_time = parseInt(user.total_study_time, 10);
+                            }
+                        });
+                        
+                        console.log('处理后的用户数据:', JSON.stringify(data.data.users));
+                        console.log('用户数量:', data.data.users.length);
+                        
+                        renderUsers(
+                            data.data.users, 
+                            data.data.total, 
+                            data.data.page, 
+                            data.data.total_pages || data.data.pages
+                        );
+                    } else {
+                        console.error('未找到有效的用户数据');
+                        userTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">暂无用户数据</td></tr>';
+                        userPagination.innerHTML = '';
+                    }
+                } else {
+                    userTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">加载失败: ${data.message || '未知错误'}</td></tr>`;
+                    userPagination.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('加载用户出错:', error);
+                userTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">加载出错: ${error.message}</td></tr>`;
+                userPagination.innerHTML = '';
+            });
+        }
+        
+        // 渲染用户列表
+        function renderUsers(users, total, page, totalPages) {
+            userTableBody.innerHTML = '';
+            
+            if (!users || users.length === 0) {
+                userTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">暂无用户数据</td></tr>';
+                return;
+            }
+            
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                
+                // 格式化注册时间
+                const createdAt = new Date(user.created_at);
+                const formattedDate = createdAt.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                tr.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name || '未设置'}</td>
+                    <td>${user.student_id || '未设置'}</td>
+                    <td>${user.major_name || '未设置'}</td>
+                    <td>${user.email}</td>
+                    <td>${formattedDate}</td>
+                `;
+                
+                userTableBody.appendChild(tr);
+            });
+            
+            // 渲染分页
+            renderPagination(total, totalPages, page);
+        }
+        
+        // 渲染分页
+        function renderPagination(total, totalPages, currentPage) {
+            userPagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // 上一页按钮
+            if (currentPage > 1) {
+                const prevLi = document.createElement('li');
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = '上一页';
+                prevBtn.addEventListener('click', () => {
+                    loadUsers(currentPage - 1);
+                });
+                prevLi.appendChild(prevBtn);
+                userPagination.appendChild(prevLi);
+            }
+            
+            // 页码按钮
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                
+                if (i === currentPage) {
+                    pageBtn.classList.add('active');
+                }
+                
+                pageBtn.addEventListener('click', () => {
+                    loadUsers(i);
+                });
+                
+                pageLi.appendChild(pageBtn);
+                userPagination.appendChild(pageLi);
+            }
+            
+            // 下一页按钮
+            if (currentPage < totalPages) {
+                const nextLi = document.createElement('li');
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = '下一页';
+                nextBtn.addEventListener('click', () => {
+                    loadUsers(currentPage + 1);
+                });
+                nextLi.appendChild(nextBtn);
+                userPagination.appendChild(nextLi);
+            }
+        }
+
+        // 调试函数 - 可在控制台中调用以检查API响应
+        window.debugAdminAPI = function() {
+            const adminToken = localStorage.getItem('admin_token') || getCookie('admin_token');
+            if (!adminToken) {
+                console.error('未找到管理员令牌');
+                return;
+            }
+            
+            console.log('开始测试API请求...');
+            
+            // 测试用户列表API
+            fetch('/api/v1/user/admin/users?page=1', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('API响应数据结构:', data);
+                console.log('是否成功:', data.success);
+                if (data.data) {
+                    console.log('data字段类型:', typeof data.data);
+                    console.log('data字段内容:', data.data);
+                    if (data.data.users) {
+                        console.log('用户数组类型:', Array.isArray(data.data.users));
+                        console.log('用户数量:', data.data.users.length);
+                        if (data.data.users.length > 0) {
+                            const firstUser = data.data.users[0];
+                            console.log('第一个用户数据:', firstUser);
+                            console.log('GPA类型:', typeof firstUser.gpa);
+                            console.log('GPA值:', firstUser.gpa);
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('API请求失败:', error);
+            });
+        };
+
+        // 页面加载完成后自动执行调试
+        console.log('页面加载完成，可以在控制台中调用 debugAdminAPI() 进行API调试');
     });
 </script>
 {% endblock %} 

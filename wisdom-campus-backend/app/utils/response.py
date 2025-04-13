@@ -3,6 +3,24 @@
 提供标准化的API响应格式，确保所有API返回结构一致
 """
 from flask import jsonify, make_response
+import json
+from decimal import Decimal
+from datetime import datetime, date
+
+# 自定义JSON编码器，处理特殊类型：Decimal, datetime等
+class CustomJSONEncoder(json.JSONEncoder):
+    """自定义JSON编码器，用于处理特殊类型的序列化"""
+    def default(self, obj):
+        # 处理Decimal类型
+        if isinstance(obj, Decimal):
+            return float(obj)
+        # 处理日期时间类型
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, date):
+            return obj.isoformat()
+        # 其他类型使用默认处理方法
+        return super(CustomJSONEncoder, self).default(obj)
 
 def api_response(success=True, message="", data=None, code=200, http_status=200):
     """
@@ -29,42 +47,24 @@ def api_response(success=True, message="", data=None, code=200, http_status=200)
     resp.headers['Content-Type'] = 'application/json; charset=utf-8'
     return resp
 
-def api_success(data=None, message="操作成功", code=200):
-    """
-    成功响应
-    
-    参数:
-        data (Any): 响应数据
-        message (str): 提示信息
-        code (int): 业务状态码
-    
-    返回:
-        tuple: (JSON响应, HTTP状态码)
-    """
-    return api_response(
-        success=True,
-        message=message,
-        data=data,
-        code=code
-    )
+def api_success(data=None, message="操作成功", code=0):
+    """返回成功的API响应"""
+    response = {
+        "success": True,
+        "code": code,
+        "message": message,
+        "data": data or {}
+    }
+    # 使用Flask的jsonify函数，它会自动使用应用配置的JSON编码器
+    return jsonify(response)
 
-def api_error(message="操作失败", error_code=400, http_status=400, data=None):
-    """
-    错误响应
-    
-    参数:
-        message (str): 错误信息
-        error_code (int): 业务错误码
-        http_status (int): HTTP状态码
-        data (Any): 额外的错误数据
-    
-    返回:
-        tuple: (JSON响应, HTTP状态码)
-    """
-    return api_response(
-        success=False,
-        message=message,
-        code=error_code,
-        data=data,
-        http_status=http_status
-    ) 
+def api_error(message="操作失败", code=1, status_code=400, errors=None):
+    """返回错误的API响应"""
+    response = {
+        "success": False,
+        "code": code,
+        "message": message,
+        "errors": errors or {}
+    }
+    # 使用Flask的jsonify函数，它会自动使用应用配置的JSON编码器
+    return jsonify(response), status_code 

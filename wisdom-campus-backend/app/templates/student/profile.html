@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主页 - 智慧校园学习助手系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navigation.css') }}">
+    <style>
+        :root {
+            --primary-color: #4A6FDC;
+            --secondary-color: #6C87E0;
+            --accent-color: #FF7D54;
+            --light-bg: #F5F7FA;
+            --dark-bg: #2A3F65;
+            --text-color: #333;
+            --light-text: #F5F7FA;
+            --border-radius: 8px;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .profile-header {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 3rem;
+            flex-shrink: 0;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--dark-bg);
+        }
+        
+        .profile-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+        
+        .profile-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .profile-bio {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 1rem;
+            font-style: italic;
+        }
+        
+        .profile-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5abb;
+        }
+        
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-actions {
+                margin: 1rem auto 0;
+            }
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .info-list {
+            list-style: none;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            font-weight: 500;
+            color: var(--dark-bg);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: var(--light-bg);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .progress-container {
+            margin-top: 1rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 111, 220, 0.2);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-tab {
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 1rem;
+        }
+        
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        footer {
+            background-color: var(--dark-bg);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body data-user-logged-in="{{ 'true' if user else 'false' }}" 
+      data-user-name="{{ user.name if user else '' }}" 
+      data-user-email="{{ user.email if user else '' }}" 
+      data-user-student-id="{{ user.student_id if user else '' }}">
+    
+    <header class="main-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-logo">智慧校园学习助手系统</a>
+            
+            <!-- 主导航链接 -->
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">首页</a></li>
+                <li><a href="{{ url_for('student_dashboard') }}">学习仪表盘</a></li>
+                <li><a href="{{ url_for('student_profile') }}" class="active">个人主页</a></li>
+            </ul>
+            
+            <!-- 用户操作 -->
+            <div class="nav-actions">
+                <button onclick="logout()" class="nav-btn nav-btn-login">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 个人资料头部 -->
+        <div class="profile-header">
+            <div class="profile-avatar" id="user-avatar">
+                {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="{{ user.name }}的头像">
+                {% else %}
+                {{ user.name[0] if user.name else '?' }}
+                {% endif %}
+            </div>
+            
+            <div class="profile-info">
+                <h1 class="profile-name" id="user-name">{{ user.name }}</h1>
+                
+                <div class="profile-meta">
+                    <div class="profile-meta-item">
+                        <span>学号:</span>
+                        <strong>{{ user.student_id or '未设置' }}</strong>
+                    </div>
+                    <div class="profile-meta-item">
+                        <span>专业:</span>
+                        <strong>{{ user.major.name if user.major else '未设置' }}</strong>
+                    </div>
+                    <div class="profile-meta-item">
+                        <span>等级:</span>
+                        <strong>LV.{{ user.level }}</strong>
+                    </div>
+                    <div class="profile-meta-item">
+                        <span>经验值:</span>
+                        <strong>{{ user.exp_points }}</strong>
+                    </div>
+                </div>
+                
+                <p class="profile-bio">{{ user.bio or '这个人很懒，还没有填写个人简介...' }}</p>
+            </div>
+            
+            <div class="profile-actions">
+                <button id="editProfileBtn" class="btn btn-primary">编辑资料</button>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <div class="main-content">
+                <!-- 个人资料 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">基本资料</h2>
+                    </div>
+                    
+                    <ul class="info-list">
+                        <li class="info-item">
+                            <span class="info-label">姓名</span>
+                            <span class="info-value">{{ user.name }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">学号</span>
+                            <span class="info-value">{{ user.student_id or '未设置' }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">邮箱</span>
+                            <span class="info-value">{{ user.email }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">专业</span>
+                            <span class="info-value">{{ user.major.name if user.major else '未设置' }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">邮箱验证</span>
+                            <span class="info-value">{{ '已验证' if user.email_verified else '未验证' }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">账号状态</span>
+                            <span class="info-value">{{ {'active': '正常', 'inactive': '未激活', 'banned': '已封禁'}.get(user.status, '未知') }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">注册时间</span>
+                            <span class="info-value">{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '未知' }}</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 学习画像 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">学习画像</h2>
+                    </div>
+                    
+                    <div class="nav-tabs">
+                        <div class="nav-tab active" data-tab="tab-learning-style">学习风格</div>
+                        <div class="nav-tab" data-tab="tab-stats">学习统计</div>
+                        <div class="nav-tab" data-tab="tab-records">学习记录</div>
+                    </div>
+                    
+                    <div id="tab-learning-style" class="tab-content active">
+                        <ul class="info-list">
+                            <li class="info-item">
+                                <span class="info-label">学习风格</span>
+                                <span class="info-value">{{ {
+                                    'visual': '视觉型学习者', 
+                                    'auditory': '听觉型学习者', 
+                                    'kinesthetic': '动觉型学习者', 
+                                    'mixed': '混合型学习者'
+                                }.get(user.profile.learning_style if user.profile else '', '未知') }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">偏好学习时间</span>
+                                <span class="info-value">{{ {
+                                    'morning': '上午', 
+                                    'afternoon': '下午', 
+                                    'evening': '傍晚', 
+                                    'night': '夜间'
+                                }.get(user.profile.preferred_time if user.profile else '', '未知') }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">平均专注时长</span>
+                                <span class="info-value">{{ user.profile.avg_focus_duration or 0 }} 分钟</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">优势学科</span>
+                                <span class="info-value">{{ user.profile.strengths if user.profile and user.profile.strengths else '暂无数据' }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">待提升学科</span>
+                                <span class="info-value">{{ user.profile.weaknesses if user.profile and user.profile.weaknesses else '暂无数据' }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">学习习惯</span>
+                                <span class="info-value">{{ user.profile.study_habits if user.profile and user.profile.study_habits else '暂无数据' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div id="tab-stats" class="tab-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ user.total_study_time or 0 }}</div>
+                                <div class="stat-label">总学习时长(分钟)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">{{ user.gpa or '0.00' }}</div>
+                                <div class="stat-label">GPA 成绩</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">LV.{{ user.level or 1 }}</div>
+                                <div class="stat-label">当前等级</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">{{ user.exp_points or 0 }}</div>
+                                <div class="stat-label">经验值</div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-container">
+                            <h3 style="margin-bottom: 1rem; font-size: 1rem; color: #555;">等级进度</h3>
+                            <div class="progress-bar">
+                                {% set progress = (user.exp_points or 0) % 100 %}
+                                <div class="progress-fill" style="width: {{ progress }}%;"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>{{ progress }}%</span>
+                                <span>下一级：LV.{{ (user.level or 1) + 1 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-records" class="tab-content">
+                        <p style="text-align: center; color: #666; padding: 2rem 0;">暂无学习记录数据</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <!-- 帐号设置 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">账号设置</h2>
+                    </div>
+                    
+                    <ul class="info-list">
+                        <li class="info-item">
+                            <span class="info-label">邮件通知</span>
+                            <span class="info-value">{{ '已开启' if user.profile and user.profile.notification_email_enabled else '已关闭' }}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">应用通知</span>
+                            <span class="info-value">{{ '已开启' if user.profile and user.profile.notification_app_enabled else '已关闭' }}</span>
+                        </li>
+                    </ul>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button id="changePasswordBtn" class="btn btn-secondary" style="width: 100%;">修改密码</button>
+                    </div>
+                </div>
+                
+                <!-- 最近活动 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">最近活动</h2>
+                    </div>
+                    
+                    <div style="color: #666; text-align: center; padding: 1rem 0;">
+                        <p>暂无最近活动记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑资料弹窗 -->
+    <div id="editProfileModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="background:white; width:90%; max-width:600px; margin:5% auto; padding:2rem; border-radius:8px; max-height:80vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+                <h2>编辑个人资料</h2>
+                <button id="closeModalBtn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" class="form-control" id="editName" value="{{ user.name }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">个人简介</label>
+                    <textarea class="form-control" id="editBio">{{ user.bio or '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">学习风格</label>
+                    <select class="form-control" id="editLearningStyle">
+                        <option value="">--请选择--</option>
+                        <option value="visual" {{ 'selected' if user.profile and user.profile.learning_style == 'visual' else '' }}>视觉型学习者</option>
+                        <option value="auditory" {{ 'selected' if user.profile and user.profile.learning_style == 'auditory' else '' }}>听觉型学习者</option>
+                        <option value="kinesthetic" {{ 'selected' if user.profile and user.profile.learning_style == 'kinesthetic' else '' }}>动觉型学习者</option>
+                        <option value="mixed" {{ 'selected' if user.profile and user.profile.learning_style == 'mixed' else '' }}>混合型学习者</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">偏好学习时间</label>
+                    <select class="form-control" id="editPreferredTime">
+                        <option value="">--请选择--</option>
+                        <option value="morning" {{ 'selected' if user.profile and user.profile.preferred_time == 'morning' else '' }}>上午</option>
+                        <option value="afternoon" {{ 'selected' if user.profile and user.profile.preferred_time == 'afternoon' else '' }}>下午</option>
+                        <option value="evening" {{ 'selected' if user.profile and user.profile.preferred_time == 'evening' else '' }}>傍晚</option>
+                        <option value="night" {{ 'selected' if user.profile and user.profile.preferred_time == 'night' else '' }}>夜间</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">通知设置</label>
+                    <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                        <label>
+                            <input type="checkbox" id="editEmailNotification" {{ 'checked' if user.profile and user.profile.notification_email_enabled else '' }}>
+                            邮件通知
+                        </label>
+                        <label>
+                            <input type="checkbox" id="editAppNotification" {{ 'checked' if user.profile and user.profile.notification_app_enabled else '' }}>
+                            应用通知
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 修改密码弹窗 -->
+    <div id="changePasswordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="background:white; width:90%; max-width:500px; margin:10% auto; padding:2rem; border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+                <h2>修改密码</h2>
+                <button id="closePasswordModalBtn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label class="form-label">当前密码</label>
+                    <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">新密码</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">确认新密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancelPasswordBtn" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">确认修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 智慧校园学习助手系统 - 仅用于API测试</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化
+            initTabs();
+            setupModal();
+            setupPasswordModal();
+        });
+        
+        // 选项卡功能
+        function initTabs() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 移除所有激活状态
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 激活当前选项卡
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // 设置编辑资料弹窗
+        function setupModal() {
+            const modal = document.getElementById('editProfileModal');
+            const openBtn = document.getElementById('editProfileBtn');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelEditBtn');
+            const form = document.getElementById('editProfileForm');
+            
+            openBtn.addEventListener('click', function() {
+                modal.style.display = 'block';
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const data = {
+                    name: document.getElementById('editName').value,
+                    bio: document.getElementById('editBio').value,
+                    learning_style: document.getElementById('editLearningStyle').value,
+                    preferred_time: document.getElementById('editPreferredTime').value,
+                    notification_email_enabled: document.getElementById('editEmailNotification').checked,
+                    notification_app_enabled: document.getElementById('editAppNotification').checked
+                };
+                
+                updateProfile(data);
+            });
+        }
+        
+        // 设置修改密码弹窗
+        function setupPasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            const openBtn = document.getElementById('changePasswordBtn');
+            const closeBtn = document.getElementById('closePasswordModalBtn');
+            const cancelBtn = document.getElementById('cancelPasswordBtn');
+            const form = document.getElementById('changePasswordForm');
+            
+            openBtn.addEventListener('click', function() {
+                modal.style.display = 'block';
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (newPassword !== confirmPassword) {
+                    alert('两次输入的新密码不一致');
+                    return;
+                }
+                
+                changePassword(currentPassword, newPassword);
+            });
+        }
+        
+        // 更新个人资料
+        function updateProfile(data) {
+            const token = localStorage.getItem('auth_token');
+            
+            fetch('/api/v1/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.message) {
+                    alert('更新成功');
+                    // 刷新页面显示更新后的数据
+                    location.reload();
+                } else {
+                    alert('更新失败: ' + (result.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('更新个人资料失败:', error);
+                alert('更新失败，请检查网络连接');
+            });
+        }
+        
+        // 修改密码
+        function changePassword(currentPassword, newPassword) {
+            const token = localStorage.getItem('auth_token');
+            
+            fetch('/api/v1/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify({
+                    old_password: currentPassword,
+                    new_password: newPassword
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('密码修改成功');
+                    document.getElementById('changePasswordModal').style.display = 'none';
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    alert('密码修改失败: ' + (result.message || '原密码错误或新密码不符合要求'));
+                }
+            })
+            .catch(error => {
+                console.error('密码修改请求失败:', error);
+                alert('密码修改失败，请检查网络连接');
+            });
+        }
+        
+        // 退出登录
+        function logout() {
+            const token = localStorage.getItem('auth_token');
+            
+            fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('登出响应:', data);
+                
+                // 清除本地存储的认证信息
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('username');
+                
+                // 跳转到登录页面
+                window.location.href = '/login';
+            })
+            .catch(error => {
+                console.error('登出请求失败:', error);
+                
+                // 即使请求失败，也清除本地存储并跳转
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('username');
+                window.location.href = '/login';
+            });
+        }
+    </script>
+</body>
+</html> 
